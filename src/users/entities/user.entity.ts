@@ -11,8 +11,6 @@ export class User {
   @Column()
   password: string;
 
-  
-
   @Column()
   role: string; // Role can be normal, admin, superadmin
 }

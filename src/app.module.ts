@@ -2,6 +2,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
 import { UsersModule } from './users/users.module';
 import { User } from './users/entities/user.entity';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { User } from './users/entities/user.entity';
       synchronize: true, // Cài đặt này sẽ tự động đồng bộ hóa các thay đổi entity vào database
     }),
     UsersModule,
+    AuthModule,
   ],
 })
 export class AppModule {}
