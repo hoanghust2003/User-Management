@@ -16,10 +16,10 @@ export class PermissionGuard implements CanActivate {
       throw new UnauthorizedException('You must be logged in to access this resource');
     }
 
-    // // Nếu không có yêu cầu permission, cho phép truy cập
-    // if (!requiredPermission) {
-    //   return true; 
-    // }
+    // Nếu không có yêu cầu permission, cho phép truy cập
+    if (!requiredPermission) {
+      return true; 
+    }
 
     // Nếu là Admin, cho phép truy cập
     if (user.role === 'admin') {

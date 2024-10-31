@@ -5,6 +5,8 @@ import { User } from '../entities/user.entity';
 import { UploadImageDto } from 'src/common/dtos/uploadImages.dto';
 import path from 'path';
 import * as fs from 'fs';
+import { UserRole } from 'src/entities/user_role.enum';
+import bcrypt from 'bcrypt';
 
 
 @Injectable()
@@ -31,25 +33,36 @@ export class UserService {
     }
 
     const uploadPath = path.resolve(__dirname, '../../uploads');
+    
     // Tạo thư mục để lưu ảnh nếu chưa tồn tại
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath);
     }
 
-    // Tạo tên file duy nhất (có thể sử dụng thư viện như uuid hoặc nanoid để tạo tên file)
+    // Kiểm tra xem user có ảnh đại diện trước đó không
+    if (user.profileImage) {
+      // Xóa ảnh cũ nếu tồn tại
+      try {
+        fs.unlinkSync(user.profileImage);
+      } catch (error) {
+        console.error('Error deleting old profile image:', error);
+      }
+    }
+
+    // Tạo tên file duy nhất cho ảnh mới
     const fileName = `${userId}-${Date.now()}-${file.originalname}`;
     const filePath = path.join(uploadPath, fileName);
 
     // Lưu file vào thư mục uploads
     fs.writeFileSync(filePath, file.buffer);
 
-    // Cập nhật đường dẫn ảnh cho user
+    // Cập nhật đường dẫn ảnh mới cho user
     user.profileImage = filePath; 
     await this.userRepository.save(user);
 
-    return user;
+    return user; // Trả về thông tin user đã cập nhật
   }
-  
+
   async findAll(): Promise<User[]> {
     return this.userRepository.find();
   }
@@ -62,9 +75,41 @@ export class UserService {
     await this.userRepository.update(id, { username});
     return this.findOne(id);
   }
+  async updatePassword(id: number, oldpassword: string, newpassword: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id}});
+    const isMatch = await bcrypt.compare(oldpassword, user.password);
+    if (!isMatch) {
+      throw new NotFoundException('Old password is not correct');
+    }
+    const encodednewpassword = await bcrypt.hash(newpassword, 10);
+    await this.userRepository.update(id, { password: newpassword}); 
+    return this.findOne(id);
+  }
 
   async removeUser(id: number): Promise<void> {
     await this.userRepository.delete(id);
   }
 
+  async assignAdminRole(userId: number): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    user.role = UserRole.ADMIN;
+    return this.userRepository.save(user);
+  }
+  
+  async removeAdminRole(userId: number): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    user.role = UserRole.USER;
+    return this.userRepository.save(user);
+  }
 }
+
