@@ -7,14 +7,17 @@ import {
   HttpStatus,
   Post,
   Request,
-  UseGuards
+  UseGuards,
+  UsePipes,
+  ValidationPipe
 } from '@nestjs/common';
-import { AuthGuard } from './auth.guard';
+import { PermissionGuard } from './guards/permission.guard';
 import { AuthService } from './auth.service';
+import { RegisterDto } from '../common/dtos/register.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
   @HttpCode(HttpStatus.OK)
   @Post('login')
@@ -22,9 +25,9 @@ export class AuthController {
     return this.authService.signIn(signInDto.username, signInDto.password);
   }
 
-  @UseGuards(AuthGuard)
-  @Get('profile')
-  getProfile(@Request() req) {
-    return req.user;
+  @Post('register')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async register(@Body() registerDto: RegisterDto) {
+    return this.authService.signUp(registerDto);
   }
 }

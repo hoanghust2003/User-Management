@@ -10,8 +10,8 @@ export class Group {
   @Column({ unique: true })
   name: string;
 
-  // @Column()
-  // description:string;
+  @Column()
+  description:string;
 
   @OneToMany(() => GroupPermission, (groupPermission) => groupPermission.group)
   groupPermissions: GroupPermission[];

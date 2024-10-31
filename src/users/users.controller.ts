@@ -1,21 +1,29 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Request, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { UserService } from './users.service';
 import { User } from '../entities/user.entity';
-import { AuthGuard } from 'src/auth/auth.guard';
-import { UserRole } from '../entities/user_role.enum';
+import { AuthGuard } from 'src/auth/guards/auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { UploadImageDto } from 'src/common/dtos/uploadImages.dto';
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
-
-  @Post()
-  async create(@Body() body: { username: string; password: string; role: UserRole }): Promise<User> {
-    return this.userService.createUser(body.username, body.password, body.role);
-  }
-  @UseGuards(AuthGuard)
+  
+  // @UseGuards(AuthPermissionGuard)
   @Get()
   async findAll(): Promise<User[]> {
     return this.userService.findAll();
+  }
+
+  @Post('upload-image/:id') 
+@UseInterceptors(FileInterceptor('image'))
+async uploadImage(@Param('id') userId: number, @UploadedFile() file: Express.Multer.File, @Body() uploadImageDto: UploadImageDto) {
+    return this.userService.updateProfileImage(userId, uploadImageDto, file); // Truyền userId, uploadImageDto, và file
+}
+  @UseGuards(AuthGuard)
+  @Get('profile')
+  getProfile(@Request() req) {
+    return req.user;
   }
 
   @Get(':id')
@@ -24,8 +32,8 @@ export class UserController {
   }
 
   @Put(':id')
-  async update(@Param('id') id: number, @Body() body: { username: string; role: UserRole }): Promise<User> {
-    return this.userService.updateUser(id, body.username, body.role);
+  async update(@Param('id') id: number, @Body() body: { username: string }): Promise<User> {
+    return this.userService.updateUser(id, body.username);
   }
 
   @Delete(':id')

@@ -20,6 +20,9 @@ export class User {
   })
   role: UserRole;
 
+  @Column({ nullable: true }) 
+  profileImage: string;
+
   @OneToMany(() => UserGroup, (userGroup) => userGroup.user)
   userGroups: UserGroup[];
 }
