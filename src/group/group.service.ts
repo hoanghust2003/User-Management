@@ -21,6 +21,10 @@ export class GroupService {
   
   ) {}
 
+  // Lấy danh sách nhóm
+  async findAll(): Promise<Group[]> {
+    return this.groupRepository.find();
+  }
   // Xem thông tin nhóm
   async findGroupById(id: number): Promise<Object> {
     const group = await this.groupRepository.findOne({ where: { id }});

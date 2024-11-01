@@ -1,15 +1,12 @@
-
 import {
   Body,
   Controller,
-  Get,
   HttpCode,
   HttpStatus,
   Post,
-  Request,
   UseGuards,
   UsePipes,
-  ValidationPipe
+  ValidationPipe,
 } from '@nestjs/common';
 import { PermissionGuard } from './guards/permission.guard';
 import { AuthService } from './auth.service';
@@ -27,9 +24,9 @@ export class AuthController {
     return this.authService.signIn(signInDto.username, signInDto.password);
   }
 
-  @UseGuards(AuthGuard,PermissionGuard)
-  @Post('register')
-  @Permission('register')
+  @UseGuards(AuthGuard, PermissionGuard)
+  @Post('users')
+  @Permission('register') 
   @UsePipes(new ValidationPipe({ transform: true }))
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.signUp(registerDto);
