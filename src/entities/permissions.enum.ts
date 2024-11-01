@@ -2,14 +2,11 @@ export enum Permissions {
  
   // Quyền quản lý người dùng
   VIEW_LIST_USERS = 'view_list_users', // Quyền xem danh sách người dùng
-  VIEW_USER = 'view_user', // Quyền xem thông tin người dùng
-  UPDATE_USER = 'update_user', // Quyền cập nhật thông tin người dùng
-  UPDATE_PROFILE = 'update_profile', // Quyền cập nhật thông tin hồ sơ
   UPDATE_OTHER_USER_IMAGE = 'update_other_user_image', // Quyền cập nhật hình ảnh của người dùng khác
-  DELETE_USER = 'delete_user', // Quyền xóa người dùng
-  CHANGE_USER_PASSWORD = 'change_user_password', // Quyền thay đổi mật khẩu của người dùng
-  ASSIGN_ADMIN_ROLE = 'assign_admin_role', // Quyền chỉ định quyền admin
-  REMOVE_ADMIN_ROLE = 'remove_admin_role', // Quyền tước quyền admin
+  VIEW_OTHER_USER = 'view_other_user', // Quyền xem thông tin người dùng khác
+  UPDATE_OTHER_USER = 'update_other_user', // Quyền cập nhật thông tin người dùng khác
+  DELETE_OTHER_USER = 'delete_other_user', // Quyền xóa người dùng khác
+  CHANGE_OTHER_USER_PASSWORD = 'change_other_user_password', // Quyền thay đổi mật khẩu của người dùng khác
 
   // Quyền quản lý nhóm
   CREATE_GROUP = 'create_group', // Quyền tạo nhóm

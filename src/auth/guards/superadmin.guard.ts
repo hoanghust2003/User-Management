@@ -7,7 +7,8 @@ export class SuperAdminGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const user = request.user; // Người dùng đã đăng nhập
+    const user = await this.authService.findOne(request.user.sub); // Người dùng đã đăng nhập
+
 
     if (user.role === 'superadmin') {
       return true; // Nếu là SuperAdmin, cho phép truy cập

@@ -1,10 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { GroupService } from './group.service';
 import { Group } from '../entities/group.entity';
 import { GroupPermission } from '../entities/group_permission.entity';
 import { UserGroup } from '../entities/user_group.entity';
 import { Permission } from  '../common/decorator/permission.decorator';
+import { AuthGuard } from 'src/auth/guards/auth.guard';
+import { PermissionGuard } from 'src/auth/guards/permission.guard';
 
+@UseGuards(AuthGuard, PermissionGuard)
 @Controller('groups')
 export class GroupController {
   constructor(private readonly groupService: GroupService) {}

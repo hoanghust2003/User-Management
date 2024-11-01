@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UserGroup } from 'src/entities/user_group.entity';
 import { RegisterDto } from '../common/dtos/register.dto'; // Import DTO
 import * as bcrypt from 'bcrypt'; // Import bcrypt để mã hóa mật khẩu
+import { User } from 'src/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -60,6 +61,10 @@ export class AuthService {
     });
   }
 
+  async findOne(id: number): Promise<User> {
+    return this.userService.findOne(id);
+  }
+
   // Kiểm tra xem người dùng có quyền hay không
   async hasPermission(userId: number, permission: Permissions): Promise<boolean> {
     // Lấy tất cả UserGroup của người dùng
@@ -73,7 +78,7 @@ export class AuthService {
     
     // Tìm các permission trong bảng GroupPermission cho các group đó
     const permissions = await this.groupPermissionRepository.find({
-      where: { group: { id: In(groupIds) }, permission },
+      where: { group: { id: In(groupIds) }, permission: permission as unknown as string },
     });
 
     // Nếu tìm thấy quyền thì trả về true, ngược lại trả về false

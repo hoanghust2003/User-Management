@@ -5,16 +5,15 @@ import { Permissions } from './permissions.enum';
 @Entity('group_permission')
 export class GroupPermission {
   @PrimaryGeneratedColumn()
-  id: string;
+  id: number;
 
   @ManyToOne(() => Group, (group) => group.groupPermissions, { onDelete: 'CASCADE' })
   group: Group;
 
   @Column({
-    type: 'enum',
-    enum: Permissions,
+    type: 'varchar',
   })
-  permission: Permissions;
+  permission: string;
 
   // @Column({ type: 'boolean', default: true })
   // is_active: boolean;

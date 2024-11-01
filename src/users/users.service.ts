@@ -3,10 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { UploadImageDto } from 'src/common/dtos/uploadImages.dto';
-import path from 'path';
+import * as path from 'path';
 import * as fs from 'fs';
 import { UserRole } from 'src/entities/user_role.enum';
-import bcrypt from 'bcrypt';
+import * as bcrypt from 'bcrypt';
 
 
 @Injectable()
@@ -32,7 +32,7 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    const uploadPath = path.resolve(__dirname, '../../uploads');
+    const uploadPath = process.env.UPLOADS_DIR || path.join(__dirname, '../../uploads');
     
     // Tạo thư mục để lưu ảnh nếu chưa tồn tại
     if (!fs.existsSync(uploadPath)) {
@@ -111,5 +111,17 @@ export class UserService {
     user.role = UserRole.USER;
     return this.userRepository.save(user);
   }
+  async createSuperAdmin(username: string, password:string): Promise<User> {
+    
+    // Mã hóa mật khẩu trước khi lưu vào cơ sở dữ liệu
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await this.userRepository.create({
+    username: username,
+    password: hashedPassword,
+    role: UserRole.SUPER_ADMIN})
+    return this.userRepository.save(user);
+  }
+
+
 }
 

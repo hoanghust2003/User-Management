@@ -7,9 +7,10 @@ import { GroupPermission } from '../entities/group_permission.entity';
 import { UserGroup } from 'src/entities/user_group.entity';
 import { User } from 'src/entities/user.entity';
 import { UsersModule } from 'src/users/users.module';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Group, GroupPermission, UserGroup, User]), UsersModule],
+  imports: [TypeOrmModule.forFeature([Group, GroupPermission, UserGroup, User]), UsersModule, AuthModule],
   controllers: [GroupController],
   providers: [GroupService]
 })

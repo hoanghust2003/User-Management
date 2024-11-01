@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Group } from '../entities/group.entity';
 import { User } from '../entities/user.entity';
 import { GroupPermission } from 'src/entities/group_permission.entity';
@@ -99,12 +99,12 @@ export class GroupService {
     for (const permission of permissions) {
       // Kiểm tra xem quyền đã tồn tại trong nhóm chưa
       const existingPermission = await this.groupPermissionRepository.findOne({
-        where: { group: { id: groupId }, permission },
+        where: { group: { id: groupId }, permission: permission as unknown as string},
       });
 
       // Nếu quyền chưa tồn tại, tạo và lưu quyền mới
       if (!existingPermission) {
-        const newPermission = this.groupPermissionRepository.create({ group, permission });
+        const newPermission = this.groupPermissionRepository.create({ group, permission: permission as unknown as string });
         const savedPermission = await this.groupPermissionRepository.save(newPermission);
         addedPermissions.push(savedPermission);
       }
@@ -125,7 +125,7 @@ export class GroupService {
     for (const permission of permissions) {
       
     const permissionToRemove = await this.groupPermissionRepository.findOne({
-      where: { permission, group: { id: groupId } },
+      where: { permission: permission as unknown as string, group: { id: groupId } },
     });
 
     if (!permissionToRemove) {

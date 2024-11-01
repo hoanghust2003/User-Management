@@ -6,6 +6,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadImageDto } from 'src/common/dtos/uploadImages.dto';
 import { PermissionGuard } from 'src/auth/guards/permission.guard';
 import { Permission } from 'src/common/decorator/permission.decorator';
+import { SuperAdminGuard } from 'src/auth/guards/superadmin.guard';
 
 @UseGuards(AuthGuard,PermissionGuard)
 @Controller('users')
@@ -18,10 +19,10 @@ export class UserController {
   async findAll(): Promise<User[]> {
     return this.userService.findAll();
   }
-
   @Get('profile')
   getProfile(@Request() req) {
-    return req.user;
+    const id =  req.user.sub;
+    return this.userService.findOne(id);
   }
 
   @Put('profile/image') 
@@ -33,12 +34,12 @@ export class UserController {
 
   @Put('profile')
   async updateProfile(@Request() req, @Body() body: { username: string }): Promise<User> {
-    const id = req.user.id;
+    const id = req.user.sub;
     return this.userService.updateUser(id, body.username);
   }
   @Put('profile/password')
   async changeProfilePassword(@Request() req, @Body() body: { oldpassword: string , newpassword: string}): Promise<User> {
-    const id = req.user.id;
+    const id = req.user.sub;
     return this.userService.updatePassword(id, body.oldpassword, body.newpassword);
   }
 
@@ -79,13 +80,20 @@ export class UserController {
     return this.userService.removeUser(id);
   }
 
+  @UseGuards(SuperAdminGuard)
   @Put('admin/:id')
   async addRole(@Param('id') id: number, @Body('roles') roles: string[]): Promise<User> {
     return this.userService.assignAdminRole(id);
   }
 
+  @UseGuards(SuperAdminGuard)
   @Delete('admin/:id')
   async removeRole(@Param('id') id: number): Promise<User> {
     return this.userService.removeAdminRole(id);
   }
+  @Post('superadmin')
+  async createSuperAdmin(@Body() body: {username:string, password:string}): Promise<User> {
+    return this.userService.createSuperAdmin(body.username, body.password);
+  }
+
 }
