@@ -9,6 +9,7 @@ export enum Permissions {
   CHANGE_OTHER_USER_PASSWORD = 'change_other_user_password', // Quyền thay đổi mật khẩu của người dùng khác
 
   // Quyền quản lý nhóm
+  VIEW_LIST_GROUPS = 'view_list_groups', // Quyền xem danh sách nhóm
   CREATE_GROUP = 'create_group', // Quyền tạo nhóm
   VIEW_GROUP = 'view_group', // Quyền xem thông tin nhóm
   UPDATE_GROUP = 'update_group', // Quyền cập nhật nhóm

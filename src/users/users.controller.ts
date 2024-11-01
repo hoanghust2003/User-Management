@@ -97,8 +97,8 @@ export class UserController {
     return this.userService.removeAdminRole(id);
   }
 
-  // @Post('superadmin')
-  // async createSuperAdmin(@Body() body: { username: string, password: string }): Promise<User> {
-  //   return this.userService.createSuperAdmin(body.username, body.password);
-  // }
+  @Post('superadmin')
+  async createSuperAdmin(@Body() body: { username: string, password: string }): Promise<User> {
+    return this.userService.createSuperAdmin(body.username, body.password);
+  }
 }

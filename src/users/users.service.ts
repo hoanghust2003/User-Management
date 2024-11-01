@@ -82,7 +82,7 @@ export class UserService {
       throw new NotFoundException('Old password is not correct');
     }
     const encodednewpassword = await bcrypt.hash(newpassword, 10);
-    await this.userRepository.update(id, { password: newpassword}); 
+    await this.userRepository.update(id, { password: encodednewpassword}); 
     return this.findOne(id);
   }
 
