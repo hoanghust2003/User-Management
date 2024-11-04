@@ -52,7 +52,7 @@ export class AuthService {
     }
 
     // Mã hóa mật khẩu trước khi lưu vào cơ sở dữ liệu
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, process.env.SALT_ROUNDS || 10);
 
     // Lưu người dùng mới vào cơ sở dữ liệu
     await this.userService.createUser({

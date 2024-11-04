@@ -57,7 +57,7 @@ export class UserService {
     fs.writeFileSync(filePath, file.buffer);
 
     // Cập nhật đường dẫn ảnh mới cho user
-    user.profileImage = filePath; 
+    user.profileImage = fileName; 
     await this.userRepository.save(user);
 
     // console.log('user: ', user);
@@ -83,7 +83,7 @@ export class UserService {
     if (!isMatch) {
       throw new NotFoundException('Old password is not correct');
     }
-    const encodednewpassword = await bcrypt.hash(newpassword, 10);
+    const encodednewpassword = await bcrypt.hash(newpassword, process.env.SALT_ROUNDS || 10);
     await this.userRepository.update(id, { password: encodednewpassword}); 
     return this.findOne(id);
   }
@@ -116,14 +116,12 @@ export class UserService {
   async createSuperAdmin(username: string, password:string): Promise<User> {
     
     // Mã hóa mật khẩu trước khi lưu vào cơ sở dữ liệu
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, process.env.SALT_ROUNDS || 10);
     const user = await this.userRepository.create({
     username: username,
     password: hashedPassword,
     role: UserRole.SUPER_ADMIN})
     return this.userRepository.save(user);
   }
-
-
 }
 
