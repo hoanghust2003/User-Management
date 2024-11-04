@@ -113,15 +113,5 @@ export class UserService {
     user.role = UserRole.USER;
     return this.userRepository.save(user);
   }
-  async createSuperAdmin(username: string, password:string): Promise<User> {
-    
-    // Mã hóa mật khẩu trước khi lưu vào cơ sở dữ liệu
-    const hashedPassword = await bcrypt.hash(password, process.env.SALT_ROUNDS || 10);
-    const user = await this.userRepository.create({
-    username: username,
-    password: hashedPassword,
-    role: UserRole.SUPER_ADMIN})
-    return this.userRepository.save(user);
-  }
 }
 
