@@ -21,7 +21,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('login')
   signIn(@Body() signInDto: Record<string, any>) {
-    console.log('Đang cố gắng đăng nhập với dữ liệu:', signInDto);
+    // console.log('Đang cố gắng đăng nhập với dữ liệu:', signInDto);
 
     return this.authService.signIn(signInDto.username, signInDto.password);
   }

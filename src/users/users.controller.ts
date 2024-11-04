@@ -28,7 +28,7 @@ export class UserController {
   @Put('me/image')
   @UseInterceptors(FileInterceptor('image'))
   async uploadImage(@Request() req, @UploadedFile() file: Express.Multer.File, @Body() uploadImageDto: UploadImageDto) {
-    const userId = req.user.id; // Lấy userId từ request
+    const userId = req.user.sub; // Lấy userId từ request
     return this.userService.updateProfileImage(userId, uploadImageDto, file); // Truyền userId, uploadImageDto, và file
   }
 
@@ -46,7 +46,7 @@ export class UserController {
 
   @Delete('me')
   async removeProfile(@Request() req): Promise<void> {
-    const id = req.user.id;
+    const id = req.user.sub;
     return this.userService.removeUser(id);
   }
 

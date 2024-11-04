@@ -60,6 +60,8 @@ export class UserService {
     user.profileImage = filePath; 
     await this.userRepository.save(user);
 
+    // console.log('user: ', user);
+
     return user; // Trả về thông tin user đã cập nhật
   }
 
