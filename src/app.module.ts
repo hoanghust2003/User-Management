@@ -23,6 +23,7 @@ import { ConfigModule } from '@nestjs/config';
       database: process.env.DATABASE_NAME,
       entities: [User, UserGroup, Group, GroupPermission],
       synchronize: true,
+      
     }),
     UsersModule,
     AuthModule,
