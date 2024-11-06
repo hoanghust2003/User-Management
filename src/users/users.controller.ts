@@ -62,25 +62,25 @@ export class UserController {
   }
 
   @Get(':id')
-  @Permission('view_user') // Quyền xem thông tin người dùng
+  @Permission('view_other_user') // Quyền xem thông tin người dùng
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<User> {
     return this.userService.findOne(id);
   }
 
   @Put(':id')
-  @Permission('update_user') // Quyền cập nhật thông tin người dùng
+  @Permission('update_other_user') // Quyền cập nhật thông tin người dùng
   async update(@Param('id', ParseIntPipe) id: number, @Body() body: { username: string }): Promise<User> {
     return this.userService.updateUser(id, body.username);
   }
 
   @Put(':id/password')
-  @Permission('change_user_password') // Quyền thay đổi mật khẩu của người dùng
+  @Permission('change_other_user_password') // Quyền thay đổi mật khẩu của người dùng
   async changePassword(@Param('id', ParseIntPipe) id: number, @Body() body: { oldpassword: string, newpassword: string }): Promise<User> {
     return this.userService.updatePassword(id, body.oldpassword, body.newpassword);
   }
 
   @Delete(':id')
-  @Permission('delete_user') // Quyền xóa người dùng
+  @Permission('delete_other_user') // Quyền xóa người dùng
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.userService.removeUser(id);
   }

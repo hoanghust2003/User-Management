@@ -11,8 +11,8 @@ import {
 } from '@nestjs/common';
 import { GroupService } from './group.service';
 import { Group } from '../entities/group.entity';
-import { GroupPermission } from '../entities/group_permission.entity';
-import { UserGroup } from '../entities/user_group.entity';
+import { GroupPermission } from '../entities/group-permission.entity';
+import { UserGroup } from '../entities/user-group.entity';
 import { Permission } from '../common/decorator/permission.decorator';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { PermissionGuard } from 'src/auth/guards/permission.guard';
@@ -81,7 +81,7 @@ export class GroupController {
 
   // Add permissions to a group
   @Post(':groupId/permissions')
-  @Permission('add_permission_to_group')
+  @Permission('add_permissions_to_group')
   async addPermissionToGroup(
     @Param('groupId', new ParseIntPipe()) groupId: number,
     @Body('permissions') permissions: Permissions[],
@@ -91,7 +91,7 @@ export class GroupController {
 
   // Remove permissions from a group
   @Delete(':groupId/permissions')
-  @Permission('remove_permission_from_group')
+  @Permission('remove_permissions_from_group')
   async removePermissionFromGroup(
     @Param('groupId', new ParseIntPipe()) groupId: number,
     @Body('permissions') permissions: Permissions[],

@@ -5,7 +5,7 @@ import { User } from '../entities/user.entity';
 import { UploadImageDto } from 'src/common/dtos/uploadImages.dto';
 import * as path from 'path';
 import * as fs from 'fs';
-import { UserRole } from 'src/entities/user_role.enum';
+import { UserRole } from 'src/entities/user-role.enum';
 import * as bcrypt from 'bcrypt';
 
 

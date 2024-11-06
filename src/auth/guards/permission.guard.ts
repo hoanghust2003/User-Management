@@ -1,10 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthService } from '../auth.service';
-import { UserRole } from 'src/entities/user_role.enum';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/entities/user.entity';
-import { Repository } from 'typeorm';
+import { UserRole } from 'src/entities/user-role.enum';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
@@ -27,7 +24,7 @@ export class PermissionGuard implements CanActivate {
     }
 
     // Nếu là Admin, cho phép truy cập  
-    if (user_object.role == 'admin'|| user_object.role == 'superadmin') {
+    if (user_object.role === UserRole.ADMIN || user_object.role === UserRole.SUPER_ADMIN) {
       return true; 
     }
 

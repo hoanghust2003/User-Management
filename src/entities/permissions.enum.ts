@@ -16,8 +16,8 @@ export enum Permissions {
   DELETE_GROUP = 'delete_group', // Quyền xóa nhóm
   ADD_MEMBER_TO_GROUP = 'add_member_to_group', // Quyền thêm thành viên vào nhóm
   REMOVE_MEMBER_FROM_GROUP = 'remove_member_from_group', // Quyền xóa thành viên khỏi nhóm
-  ADD_PERMISSION_TO_GROUP = 'add_permission_to_group', // Quyền thêm quyền cho nhóm
-  REMOVE_PERMISSION_FROM_GROUP = 'remove_permission_from_group', // Quyền xóa quyền khỏi nhóm
+  ADD_PERMISSION_TO_GROUP = 'add_permissions_to_group', // Quyền thêm quyền cho nhóm
+  REMOVE_PERMISSION_FROM_GROUP = 'remove_permissions_from_group', // Quyền xóa quyền khỏi nhóm
 
   // Quyền đăng ký
   REGISTER = 'register', // Quyền đăng ký

@@ -1,8 +1,8 @@
 import { DataSource } from "typeorm";
 import { User } from "./entities/user.entity";
-import { UserGroup } from "./entities/user_group.entity";
+import { UserGroup } from "./entities/user-group.entity";
 import { Group } from "./entities/group.entity";
-import { GroupPermission } from "./entities/group_permission.entity";
+import { GroupPermission } from "./entities/group-permission.entity";
 
 export const AppDataSource = new DataSource({
   type: 'mysql',

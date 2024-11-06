@@ -2,9 +2,9 @@ import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/co
 import { UserService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { In, Repository } from 'typeorm';
-import { GroupPermission } from 'src/entities/group_permission.entity';
+import { GroupPermission } from 'src/entities/group-permission.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserGroup } from 'src/entities/user_group.entity';
+import { UserGroup } from 'src/entities/user-group.entity';
 import { RegisterDto } from '../common/dtos/register.dto'; // Import DTO
 import * as bcrypt from 'bcrypt'; // Import bcrypt để mã hóa mật khẩu
 import { User } from 'src/entities/user.entity';
@@ -37,8 +37,9 @@ export class AuthService {
     }
 
     const payload = { username: user.username, sub: user.id };
+    // console.log(process.env.JWT_SECRET);
     return {
-      access_token: await this.jwtService.signAsync(payload),
+      access_token: await this.jwtService.signAsync(payload, { secret: process.env.JWT_SECRET }),
     };
   }
 
@@ -78,7 +79,7 @@ export class AuthService {
     
     // Tìm các permission trong bảng GroupPermission cho các group đó
     const permissions = await this.groupPermissionRepository.find({
-      where: { group: { id: In(groupIds) }, permission: permission as unknown as string },
+      where: { group: { id: In(groupIds) }, permission: In([permission]) },
     });
 
     // Nếu tìm thấy quyền thì trả về true, ngược lại trả về false

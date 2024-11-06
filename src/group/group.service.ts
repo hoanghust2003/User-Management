@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { DeepPartial, Equal, In, Repository } from 'typeorm';
 import { Group } from '../entities/group.entity';
 import { User } from '../entities/user.entity';
-import { GroupPermission } from 'src/entities/group_permission.entity';
-import { UserGroup } from 'src/entities/user_group.entity';
+import { GroupPermission } from 'src/entities/group-permission.entity';
+import { UserGroup } from 'src/entities/user-group.entity';
 
 
 @Injectable()
@@ -103,12 +103,12 @@ export class GroupService {
     for (const permission of permissions) {
       // Kiểm tra xem quyền đã tồn tại trong nhóm chưa
       const existingPermission = await this.groupPermissionRepository.findOne({
-        where: { group: { id: groupId }, permission: permission as unknown as string},
+        where: { group: { id: groupId }, permission: In([permission])},
       });
 
       // Nếu quyền chưa tồn tại, tạo và lưu quyền mới
       if (!existingPermission) {
-        const newPermission = this.groupPermissionRepository.create({ group, permission: permission as unknown as string });
+        const newPermission = this.groupPermissionRepository.create({ group, permission } as unknown as DeepPartial<GroupPermission>);
         const savedPermission = await this.groupPermissionRepository.save(newPermission);
         addedPermissions.push(savedPermission);
       }
@@ -129,7 +129,7 @@ export class GroupService {
     for (const permission of permissions) {
       
     const permissionToRemove = await this.groupPermissionRepository.findOne({
-      where: { permission: permission as unknown as string, group: { id: groupId } },
+      where: { permission: In([permission]), group: { id: groupId } },
     });
 
     if (!permissionToRemove) {
