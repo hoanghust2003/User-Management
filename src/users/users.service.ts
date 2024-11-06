@@ -66,11 +66,16 @@ export class UserService {
   }
 
   async findAll(): Promise<User[]> {
-    return this.userRepository.find();
+    return this.userRepository.find({
+      select: ['id', 'username', 'role', 'profileImage'],
+    });
   }
 
   async findOne(id: number): Promise<User> {
-    return this.userRepository.findOne({ where: { id } });
+    return this.userRepository.findOne({ 
+      select: ['id', 'username', 'role', 'profileImage'],
+      where: { id } 
+    });
   }
 
   async updateUser(id: number, username: string): Promise<User> {
