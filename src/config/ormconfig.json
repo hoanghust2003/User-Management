@@ -6,5 +6,8 @@
   "password": "process.env.DATABASE_PASSWORD",
   "database": "process.env.DATABASE_NAME",
   "entities": ["dist/**/*.entity.js"],
-  "synchronize": false
+  "migrations": ["src/migration/**/*.ts"],
+  "cli": {
+    "migrationsDir": "src/migration"
+  }
 }

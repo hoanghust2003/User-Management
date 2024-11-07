@@ -8,7 +8,7 @@ import { PermissionGuard } from 'src/auth/guards/permission.guard';
 import { Permission } from 'src/common/decorator/permission.decorator';
 import { SuperAdminGuard } from 'src/auth/guards/superadmin.guard';
 
-// @UseGuards(AuthGuard, PermissionGuard)
+@UseGuards(AuthGuard, PermissionGuard)
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}

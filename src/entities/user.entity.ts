@@ -25,4 +25,5 @@ export class User {
 
   @OneToMany(() => UserGroup, (userGroup) => userGroup.user)
   userGroups: UserGroup[];
+  
 }
