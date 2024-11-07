@@ -19,13 +19,13 @@ export class UserService {
 
   async createUser(userData: Partial<User>): Promise<User> {
     const user = this.userRepository.create(userData);
-    return this.userRepository.save(user);
+    return await this.userRepository.save(user);
   }
   async findOneByUsername(username: string): Promise<User> {
-    return this.userRepository.findOne({ where: { username } });
+    return await this.userRepository.findOne({ where: { username } });
   }
 
-  async updateProfileImage(userId: number, uploadImageDto: UploadImageDto, file: Express.Multer.File): Promise<User> {
+  async updateProfileImage(userId: number, uploadImageDto: UploadImageDto, file: Express.Multer.File): Promise<any> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
     if (!user) {
@@ -42,8 +42,9 @@ export class UserService {
     // Kiểm tra xem user có ảnh đại diện trước đó không
     if (user.profileImage) {
       // Xóa ảnh cũ nếu tồn tại
+      const oldImagePath = path.join(uploadPath, user.profileImage);
       try {
-        fs.unlinkSync(user.profileImage);
+        fs.unlinkSync(oldImagePath);
       } catch (error) {
         console.error('Error deleting old profile image:', error);
       }
@@ -62,27 +63,45 @@ export class UserService {
 
     // console.log('user: ', user);
 
-    return user; // Trả về thông tin user đã cập nhật
+    return this.findOne(userId); // Trả về thông tin user đã cập nhật
   }
 
-  async findAll(): Promise<User[]> {
-    return this.userRepository.find({
+  async findAll(): Promise<any[]> {
+    const users = await this.userRepository.find({
       select: ['id', 'username', 'role', 'profileImage'],
     });
+
+    // Thêm trường ImagePath cho mỗi user
+    return users.map(user => ({
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      ImagePath: `http://localhost:${process.env.PORT}/uploads/${user.profileImage}`, // Tạo đường dẫn đầy đủ cho profileImage
+    }));
   }
 
-  async findOne(id: number): Promise<User> {
-    return this.userRepository.findOne({ 
+  async findOne(id: number): Promise<any> {
+    const user = await this.userRepository.findOne({ 
       select: ['id', 'username', 'role', 'profileImage'],
       where: { id } 
     });
+    if (user) {
+      return {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        ImagePath: `http://localhost:${process.env.PORT}/uploads/${user.profileImage}`, // Trả về đường dẫn ảnh thay vì profileImage
+      };
+    } else {
+      return null; 
+    }
   }
 
-  async updateUser(id: number, username: string): Promise<User> {
+  async updateUser(id: number, username: string): Promise<any> {
     await this.userRepository.update(id, { username});
     return this.findOne(id);
   }
-  async updatePassword(id: number, oldpassword: string, newpassword: string): Promise<User> {
+  async updatePassword(id: number, oldpassword: string, newpassword: string): Promise<any> {
     const user = await this.userRepository.findOne({ where: { id}});
     const isMatch = await bcrypt.compare(oldpassword, user.password);
     if (!isMatch) {
@@ -97,7 +116,7 @@ export class UserService {
     await this.userRepository.delete(id);
   }
 
-  async assignAdminRole(userId: number): Promise<User> {
+  async assignAdminRole(userId: number): Promise<any> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
     if (!user) {
@@ -105,10 +124,11 @@ export class UserService {
     }
 
     user.role = UserRole.ADMIN;
-    return this.userRepository.save(user);
+    this.userRepository.save(user);
+    return this.findOne(userId);
   }
   
-  async removeAdminRole(userId: number): Promise<User> {
+  async removeAdminRole(userId: number): Promise<any> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
     if (!user) {
@@ -116,7 +136,8 @@ export class UserService {
     }
 
     user.role = UserRole.USER;
-    return this.userRepository.save(user);
+    this.userRepository.save(user);
+    return this.findOne(userId);
   }
 }
 

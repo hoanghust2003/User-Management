@@ -5,6 +5,7 @@ import { Group } from '../entities/group.entity';
 import { User } from '../entities/user.entity';
 import { GroupPermission } from 'src/entities/group-permission.entity';
 import { UserGroup } from 'src/entities/user-group.entity';
+import path from 'path';
 
 
 @Injectable()
@@ -33,7 +34,17 @@ export class GroupService {
     }
     // Tìm danh sách thành viên của nhóm
     const userGroups = await this.userGroupRepository.find({ where: { group: { id } }, relations: ['user'] });
-    const members = userGroups.map(userGroup => userGroup.user);
+    const members = userGroups.map(userGroup => {
+      const user = userGroup.user;
+  
+      // Trả về các trường cần thiết của user, bao gồm ImagePath
+      return {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        ImagePath: `http://localhost:${process.env.PORT}/uploads/${user.profileImage}`, // Trả về đường dẫn ảnh
+      };
+    });
 
     // Tìm danh sách quyền của nhóm
     const groupPermissions = await this.groupPermissionRepository.find({ where: { group: { id } } });
@@ -49,15 +60,16 @@ export class GroupService {
   }
 
   // Thêm nhóm
-  async createGroup(name: string, description: string): Promise<Group> {
+  async createGroup(name: string, description: string): Promise<any> {
     const group = this.groupRepository.create({ name , description});
-    return this.groupRepository.save(group);
+    await this.groupRepository.save(group);
+    return this.findGroupById(group.id);
   }
 
   // Sửa nhóm
-  async updateGroup(id: number, name: string, description: string): Promise<Group> {
+  async updateGroup(id: number, name: string, description: string): Promise<any> {
     await this.groupRepository.update(id, { name, description });
-    return this.groupRepository.findOne({where: {id}});
+    return this.findGroupById(id);
   }
 
   // Xóa nhóm
@@ -67,17 +79,30 @@ export class GroupService {
 
   // Thêm thành viên vào nhóm
   async addMemberToGroup(groupId: number, userId: number): Promise<UserGroup> {
-    const group = await this.groupRepository.findOne({where: {id: groupId}});
+    // Kiểm tra xem nhóm và người dùng có tồn tại không
+    const group = await this.groupRepository.findOne({ where: { id: groupId } });
     const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (user && group) {
-      const user_group = this.userGroupRepository.create({user, group});
-      return this.userGroupRepository.save(user_group);
+  
+    if (!group || !user) {
+      throw new Error('Group or User not found');
     }
-    throw new Error('Group or User not found');
+  
+    // Kiểm tra xem người dùng đã có trong nhóm chưa
+    const existingUserGroup = await this.userGroupRepository.findOne({
+      where: { user: { id: userId }, group: { id: groupId } },
+    });
+  
+    if (existingUserGroup) {
+      throw new Error('User is already a member of this group');
+    }
+  
+    // Nếu người dùng chưa có trong nhóm, tiến hành thêm
+    const userGroup = this.userGroupRepository.create({ user, group });
+    return this.userGroupRepository.save(userGroup);
   }
 
   // Xóa thành viên khỏi nhóm
-  async removeMemberFromGroup(groupId: number, userId: number): Promise<void> {
+  async removeMemberFromGroup(groupId: number, userId: number): Promise<any> {
     const userGroup = await this.userGroupRepository.findOne({
       where: { group: { id: groupId }, user: { id: userId } },
     });
@@ -88,10 +113,11 @@ export class GroupService {
   
     // Xóa bản ghi UserGroup
     await this.userGroupRepository.delete(userGroup.id);
+    return this.findGroupById(groupId);
   }
 
   // Thêm quyền cho nhóm
-  async addPermissionToGroup(groupId: number, permissions: Permissions[]): Promise<GroupPermission[]> {
+  async addPermissionToGroup(groupId: number, permissions: Permissions[]): Promise<any> {
     const group = await this.groupRepository.findOne({where: {id: groupId}});
 
     if (!group) {
@@ -114,11 +140,11 @@ export class GroupService {
       }
     }
 
-    return addedPermissions;
+    return this.findGroupById(groupId);
   }
 
   // Xóa quyền khỏi nhóm
-  async removePermissionFromGroup(groupId: number, permissions: Permissions[]): Promise<void> {
+  async removePermissionFromGroup(groupId: number, permissions: Permissions[]): Promise<any> {
     const group = await this.groupRepository.findOne({where: {id: groupId}});
 
     if (!group) {
@@ -139,6 +165,7 @@ export class GroupService {
     // Xóa quyền khỏi nhóm
     await this.groupPermissionRepository.delete(permissionToRemove.id);
     }
+    return this.findGroupById(groupId);
   }
 
 }
