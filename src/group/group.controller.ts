@@ -78,8 +78,8 @@ export class GroupController {
   @Permission(Permissions.REMOVE_MEMBER_FROM_GROUP)
   async removeMemberFromGroup(
     @Param('groupId', new ParseIntPipe()) groupId: number,
-    @Param('userId', new ParseIntPipe()) userId: number,
-  ): Promise<void> {
+    @Param('userId', new ParseIntPipe()) userId : number,
+  ): Promise<void> { 
     await this.groupService.removeMemberFromGroup(groupId, userId);
   }
 

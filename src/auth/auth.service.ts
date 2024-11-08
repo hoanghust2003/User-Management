@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { UserService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { GroupPermission } from 'src/entities/group-permission.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserGroup } from 'src/entities/user-group.entity';
