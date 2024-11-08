@@ -5,8 +5,7 @@ import { Group } from '../entities/group.entity';
 import { User } from '../entities/user.entity';
 import { GroupPermission } from 'src/entities/group-permission.entity';
 import { UserGroup } from 'src/entities/user-group.entity';
-import path from 'path';
-
+import { Permissions } from 'src/common/enums/permissions.enum';
 
 @Injectable()
 export class GroupService {
@@ -24,7 +23,7 @@ export class GroupService {
 
   // Lấy danh sách nhóm
   async findAll(): Promise<Group[]> {
-    return this.groupRepository.find();
+    return await this.groupRepository.find();
   }
   // Xem thông tin nhóm
   async findGroupById(id: number): Promise<Object> {
@@ -61,15 +60,15 @@ export class GroupService {
 
   // Thêm nhóm
   async createGroup(name: string, description: string): Promise<any> {
-    const group = this.groupRepository.create({ name , description});
+    const group = await this.groupRepository.create({ name , description});
     await this.groupRepository.save(group);
-    return this.findGroupById(group.id);
+    return await this.findGroupById(group.id);
   }
 
   // Sửa nhóm
   async updateGroup(id: number, name: string, description: string): Promise<any> {
     await this.groupRepository.update(id, { name, description });
-    return this.findGroupById(id);
+    return await this.findGroupById(id);
   }
 
   // Xóa nhóm
@@ -97,8 +96,8 @@ export class GroupService {
     }
   
     // Nếu người dùng chưa có trong nhóm, tiến hành thêm
-    const userGroup = this.userGroupRepository.create({ user, group });
-    return this.userGroupRepository.save(userGroup);
+    const userGroup = await this.userGroupRepository.create({ user, group });
+    return await this.userGroupRepository.save(userGroup);
   }
 
   // Xóa thành viên khỏi nhóm
@@ -113,7 +112,7 @@ export class GroupService {
   
     // Xóa bản ghi UserGroup
     await this.userGroupRepository.delete(userGroup.id);
-    return this.findGroupById(groupId);
+    return await this.findGroupById(groupId);
   }
 
   // Thêm quyền cho nhóm
@@ -134,13 +133,13 @@ export class GroupService {
 
       // Nếu quyền chưa tồn tại, tạo và lưu quyền mới
       if (!existingPermission) {
-        const newPermission = this.groupPermissionRepository.create({ group, permission } as unknown as DeepPartial<GroupPermission>);
+        const newPermission = await this.groupPermissionRepository.create({ group, permission } as unknown as DeepPartial<GroupPermission>);
         const savedPermission = await this.groupPermissionRepository.save(newPermission);
         addedPermissions.push(savedPermission);
       }
     }
 
-    return this.findGroupById(groupId);
+    return await this.findGroupById(groupId);
   }
 
   // Xóa quyền khỏi nhóm
@@ -165,7 +164,7 @@ export class GroupService {
     // Xóa quyền khỏi nhóm
     await this.groupPermissionRepository.delete(permissionToRemove.id);
     }
-    return this.findGroupById(groupId);
+    return await this.findGroupById(groupId);
   }
 
 }

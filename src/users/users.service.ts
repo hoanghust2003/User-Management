@@ -2,10 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
-import { UploadImageDto } from 'src/common/dtos/uploadImages.dto';
+import { UploadImageDto } from 'src/users/dto/upload-image.dto';
 import * as path from 'path';
 import * as fs from 'fs';
-import { UserRole } from 'src/entities/user-role.enum';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import * as bcrypt from 'bcrypt';
 
 
@@ -32,11 +32,13 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    const uploadPath = process.env.UPLOADS_DIR || path.join(__dirname, '../../uploads');
-    
+    const uploadPath = process.env.UPLOADS_DIR;
+
     // Tạo thư mục để lưu ảnh nếu chưa tồn tại
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath);
+    try {
+      await fs.promises.mkdir(uploadPath, { recursive: true });
+    } catch (error) {
+      console.error('Error creating upload directory:', error);
     }
 
     // Kiểm tra xem user có ảnh đại diện trước đó không
@@ -44,7 +46,7 @@ export class UserService {
       // Xóa ảnh cũ nếu tồn tại
       const oldImagePath = path.join(uploadPath, user.profileImage);
       try {
-        fs.unlinkSync(oldImagePath);
+        await fs.promises.unlink(oldImagePath);
       } catch (error) {
         console.error('Error deleting old profile image:', error);
       }
@@ -55,7 +57,7 @@ export class UserService {
     const filePath = path.join(uploadPath, fileName);
 
     // Lưu file vào thư mục uploads
-    fs.writeFileSync(filePath, file.buffer);
+    await fs.promises.writeFile(filePath, file.buffer);
 
     // Cập nhật đường dẫn ảnh mới cho user
     user.profileImage = fileName; 
@@ -63,7 +65,7 @@ export class UserService {
 
     // console.log('user: ', user);
 
-    return this.findOne(userId); // Trả về thông tin user đã cập nhật
+    return await this.findOne(userId); // Trả về thông tin user đã cập nhật
   }
 
   async findAll(): Promise<any[]> {
@@ -99,7 +101,7 @@ export class UserService {
 
   async updateUser(id: number, username: string): Promise<any> {
     await this.userRepository.update(id, { username});
-    return this.findOne(id);
+    return await this.findOne(id);
   }
   async updatePassword(id: number, oldpassword: string, newpassword: string): Promise<any> {
     const user = await this.userRepository.findOne({ where: { id}});
@@ -109,7 +111,7 @@ export class UserService {
     }
     const encodednewpassword = await bcrypt.hash(newpassword, process.env.SALT_ROUNDS || 10);
     await this.userRepository.update(id, { password: encodednewpassword}); 
-    return this.findOne(id);
+    return await this.findOne(id);
   }
 
   async removeUser(id: number): Promise<void> {
@@ -124,8 +126,8 @@ export class UserService {
     }
 
     user.role = UserRole.ADMIN;
-    this.userRepository.save(user);
-    return this.findOne(userId);
+    await this.userRepository.save(user);
+    return await this.findOne(userId);
   }
   
   async removeAdminRole(userId: number): Promise<any> {
@@ -137,7 +139,7 @@ export class UserService {
 
     user.role = UserRole.USER;
     this.userRepository.save(user);
-    return this.findOne(userId);
+    return await this.findOne(userId);
   }
 }
 

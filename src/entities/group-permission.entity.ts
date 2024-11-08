@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { Group } from './group.entity';
-import { Permissions } from './permissions.enum';
+import { Permissions } from '../common/enums/permissions.enum';
 
 @Entity('group_permission')
 export class GroupPermission {

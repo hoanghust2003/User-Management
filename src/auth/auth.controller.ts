@@ -10,9 +10,10 @@ import {
 } from '@nestjs/common';
 import { PermissionGuard } from './guards/permission.guard';
 import { AuthService } from './auth.service';
-import { RegisterDto } from '../common/dtos/register.dto';
+import { AuthDto } from './dto/auth.dto';
 import { Permission } from 'src/common/decorator/permission.decorator';
 import { AuthGuard } from './guards/auth.guard';
+import { Permissions } from 'src/common/enums/permissions.enum';
 
 @Controller('auth')
 export class AuthController {
@@ -20,17 +21,17 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  signIn(@Body() signInDto: Record<string, any>) {
+  async signIn(@Body() authDto: AuthDto) {
     // console.log('Đang cố gắng đăng nhập với dữ liệu:', signInDto);
 
-    return this.authService.signIn(signInDto.username, signInDto.password);
+    return await this.authService.signIn(authDto.username, authDto.password);
   }
 
   @UseGuards(AuthGuard, PermissionGuard)
-  @Post('users')
-  @Permission('register') 
+  @Post('signup')
+  @Permission(Permissions.REGISTER) 
   @UsePipes(new ValidationPipe({ transform: true }))
-  async register(@Body() registerDto: RegisterDto) {
-    return this.authService.signUp(registerDto);
+  async register(@Body() authDto: AuthDto) {
+    return await this.authService.signUp(authDto);
   }
 }

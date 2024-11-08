@@ -3,10 +3,13 @@ import { UserService } from './users.service';
 import { User } from '../entities/user.entity';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { UploadImageDto } from 'src/common/dtos/uploadImages.dto';
+import { UploadImageDto } from 'src/users/dto/upload-image.dto';
 import { PermissionGuard } from 'src/auth/guards/permission.guard';
 import { Permission } from 'src/common/decorator/permission.decorator';
 import { SuperAdminGuard } from 'src/auth/guards/superadmin.guard';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { Permissions } from 'src/common/enums/permissions.enum';
 
 @UseGuards(AuthGuard, PermissionGuard)
 @Controller('users')
@@ -14,86 +17,86 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
-  @Permission('view_list_users')
+  @Permission(Permissions.VIEW_LIST_USERS) // Quyền xem danh sách người dùng
   async findAll(): Promise<User[]> {
-    return this.userService.findAll();
+    return await this.userService.findAll();
   }
 
   @Get('me')
-  getProfile(@Request() req) {
+  async getProfile(@Request() req) {
     const id = req.user.sub;
-    return this.userService.findOne(id);
+    return await this.userService.findOne(id);
   }
 
   @Put('me/image')
   @UseInterceptors(FileInterceptor('image'))
   async uploadImage(@Request() req, @UploadedFile() file: Express.Multer.File, @Body() uploadImageDto: UploadImageDto) {
     const userId = req.user.sub; // Lấy userId từ request
-    return this.userService.updateProfileImage(userId, uploadImageDto, file); // Truyền userId, uploadImageDto, và file
+    return await this.userService.updateProfileImage(userId, uploadImageDto, file); // Truyền userId, uploadImageDto, và file
   }
 
   @Put('me')
-  async updateProfile(@Request() req, @Body() body: { username: string }): Promise<User> {
+  async updateProfile(@Request() req, @Body() updateUserDto : UpdateUserDto): Promise<User> {
     const id = req.user.sub;
-    return this.userService.updateUser(id, body.username);
+    return await this.userService.updateUser(id, updateUserDto.username);
   }
 
   @Put('me/password')
-  async changeProfilePassword(@Request() req, @Body() body: { oldpassword: string, newpassword: string }): Promise<User> {
+  async changeProfilePassword(@Request() req, @Body() changePasswordDto : ChangePasswordDto): Promise<User> {
     const id = req.user.sub;
-    return this.userService.updatePassword(id, body.oldpassword, body.newpassword);
+    return await this.userService.updatePassword(id, changePasswordDto.oldpassword, changePasswordDto.newpassword);
   }
 
   @Delete('me')
   async removeProfile(@Request() req): Promise<void> {
     const id = req.user.sub;
-    return this.userService.removeUser(id);
+    return await this.userService.removeUser(id);
   }
 
   @Put(':id/image')
   @UseInterceptors(FileInterceptor('image'))
-  @Permission('update_other_user_image') // Quyền cập nhật hình ảnh của người dùng khác
+  @Permission(Permissions.UPDATE_OTHER_USER_IMAGE) // Quyền cập nhật hình ảnh của người dùng khác
   async changeAvatarOfOtherUser(
     @Param('id', ParseIntPipe) userId: number,
     @UploadedFile() file: Express.Multer.File,
     @Body() uploadImageDto: UploadImageDto
   ) {
-    return this.userService.updateProfileImage(userId, uploadImageDto, file); // Truyền userId, uploadImageDto, và file
+    return await this.userService.updateProfileImage(userId, uploadImageDto, file); // Truyền userId, uploadImageDto, và file
   }
 
   @Get(':id')
-  @Permission('view_other_user') // Quyền xem thông tin người dùng
+  @Permission(Permissions.VIEW_OTHER_USER) // Quyền xem thông tin người dùng
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<User> {
-    return this.userService.findOne(id);
+    return await this.userService.findOne(id);
   }
 
   @Put(':id')
-  @Permission('update_other_user') // Quyền cập nhật thông tin người dùng
-  async update(@Param('id', ParseIntPipe) id: number, @Body() body: { username: string }): Promise<User> {
-    return this.userService.updateUser(id, body.username);
+  @Permission(Permissions.UPDATE_OTHER_USER) // Quyền cập nhật thông tin người dùng
+  async update(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto): Promise<User> {
+    return await this.userService.updateUser(id, updateUserDto.username);
   }
 
   @Put(':id/password')
-  @Permission('change_other_user_password') // Quyền thay đổi mật khẩu của người dùng
-  async changePassword(@Param('id', ParseIntPipe) id: number, @Body() body: { oldpassword: string, newpassword: string }): Promise<User> {
-    return this.userService.updatePassword(id, body.oldpassword, body.newpassword);
+  @Permission(Permissions.CHANGE_OTHER_USER_PASSWORD) // Quyền thay đổi mật khẩu của người dùng
+  async changePassword(@Param('id', ParseIntPipe) id: number, @Body() changePasswordDto : ChangePasswordDto): Promise<User> {
+    return await this.userService.updatePassword(id, changePasswordDto.oldpassword, changePasswordDto.newpassword);
   }
 
   @Delete(':id')
-  @Permission('delete_other_user') // Quyền xóa người dùng
+  @Permission(Permissions.DELETE_OTHER_USER) // Quyền xóa người dùng
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
-    return this.userService.removeUser(id);
+    return await this.userService.removeUser(id);
   }
 
   @UseGuards(SuperAdminGuard)
   @Put(':id/roles/admin')
-  async addRole(@Param('id', ParseIntPipe) id: number, @Body('roles') roles: string[]): Promise<User> {
-    return this.userService.assignAdminRole(id);
+  async addRole(@Param('id', ParseIntPipe) id: number): Promise<User> {
+    return await this.userService.assignAdminRole(id);
   }
 
   @UseGuards(SuperAdminGuard)
   @Delete(':id/roles/admin')
   async removeRole(@Param('id', ParseIntPipe) id: number): Promise<User> {
-    return this.userService.removeAdminRole(id);
+    return await this.userService.removeAdminRole(id);
   }
 }
