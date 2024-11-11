@@ -6,7 +6,13 @@ declare const module: any;
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api');
-  app.enableCors();
+  app.enableCors(
+    {
+      origin: '*', // Cho phép tất cả các nguồn
+      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+      allowedHeaders: 'Content-Type, Accept, Authorization',
+    }
+  );
 
   // Cấu hình Swagger
   const config = new DocumentBuilder()
