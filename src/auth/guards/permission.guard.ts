@@ -29,7 +29,7 @@ export class PermissionGuard implements CanActivate {
     }
 
     // Check if the user has the required permission
-    const hasPermission = await this.authService.hasPermission(user.id, requiredPermission);
+    const hasPermission = await this.authService.hasPermission(user.sub, requiredPermission);
     if (!hasPermission) {
       throw new ForbiddenException('You do not have permission to access this resource');
     }

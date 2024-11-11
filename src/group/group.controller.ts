@@ -88,7 +88,7 @@ export class GroupController {
   @ApiResponse({ status: 201, description: 'Permissions added to group successfully.' })
   async addPermissionToGroup(
     @Param('groupId', new ParseIntPipe()) groupId: number,
-    @Body('permissions') permissionArrayDto: PermissionArrayDto,
+    @Body() permissionArrayDto: PermissionArrayDto,
   ): Promise<object> {
     return await this.groupService.addPermissionToGroup(groupId, permissionArrayDto.permissions);
   }

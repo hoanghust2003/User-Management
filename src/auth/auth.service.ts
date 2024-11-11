@@ -67,7 +67,7 @@ export class AuthService {
   }
 
   // Check if a user has a specific permission
-  async hasPermission(userId: number, permission: Permissions): Promise<boolean> { 
+  async hasPermission(userId: number, permission: Permissions): Promise<boolean> {
     const result = await this.groupPermissionRepository
       .createQueryBuilder('groupPermission')
       .innerJoin('groupPermission.group', 'group')
