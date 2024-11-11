@@ -9,7 +9,7 @@ import { SuperAdminGuard } from 'src/auth/guards/superadmin.guard';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Permissions } from 'src/common/enums/permissions.enum';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiConsumes } from '@nestjs/swagger';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -72,6 +72,7 @@ export class UserController {
   @Permission(Permissions.UPDATE_OTHER_USER_IMAGE)
   @ApiOperation({ summary: 'Change avatar of another user' })
   @ApiResponse({ status: 200, description: 'Avatar changed successfully.' })
+  @ApiConsumes('multipart/form-data')
   async changeAvatarOfOtherUser(
     @Param('id', ParseIntPipe) userId: number,
     @UploadedFile() file: Express.Multer.File,

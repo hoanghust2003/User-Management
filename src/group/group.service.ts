@@ -76,7 +76,7 @@ export class GroupService {
   }
 
   // Add a member to a group
-  async addMemberToGroup(groupId: number, userId: number): Promise<UserGroup> {
+  async addMemberToGroup(groupId: number, userId: number): Promise<object> {
     // Kiểm tra xem nhóm và người dùng có tồn tại không
     const group = await this.groupRepository.findOne({ where: { id: groupId } });
     const user = await this.userRepository.findOne({ where: { id: userId } });
@@ -96,7 +96,8 @@ export class GroupService {
   
     // If the user is not a member of the group, create a new UserGroup record
     const userGroup = await this.userGroupRepository.create({ user, group });
-    return await this.userGroupRepository.save(userGroup);
+    await this.userGroupRepository.save(userGroup);
+    return await this.findGroupById(groupId);
   }
 
   // Delete a member from a group

@@ -1,7 +1,6 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, UseGuards } from '@nestjs/common';
 import { GroupService } from './group.service';
 import { Group } from '../entities/group.entity';
-import { UserGroup } from '../entities/user-group.entity';
 import { Permission } from '../common/decorator/permission.decorator';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { PermissionGuard } from 'src/auth/guards/permission.guard';
@@ -68,7 +67,7 @@ export class GroupController {
   async addMemberToGroup(
     @Param('groupId', new ParseIntPipe()) groupId: number,
     @Param('userId', new ParseIntPipe()) userId: number,
-  ): Promise<UserGroup> {
+  ): Promise<object> {
     return await this.groupService.addMemberToGroup(groupId, userId);
   }
 
@@ -79,8 +78,8 @@ export class GroupController {
   async removeMemberFromGroup(
     @Param('groupId', new ParseIntPipe()) groupId: number,
     @Param('userId', new ParseIntPipe()) userId: number,
-  ): Promise<void> {
-    await this.groupService.removeMemberFromGroup(groupId, userId);
+  ): Promise<object> {
+    return await this.groupService.removeMemberFromGroup(groupId, userId);
   }
 
   @Post(':groupId/permissions')
