@@ -10,6 +10,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Permissions } from 'src/common/enums/permissions.enum';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiConsumes } from '@nestjs/swagger';
+import { UserInfo } from 'src/common/interface/user-info.interface';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -29,7 +30,7 @@ export class UserController {
   @Get('me')
   @ApiOperation({ summary: 'Get profile of the logged-in user' })
   @ApiResponse({ status: 200, description: 'Return the profile of the logged-in user.' })
-  async getProfile(@Request() req) {
+  async getProfile(@Request() req): Promise<UserInfo> {
     const id = req.user.sub;
     return await this.userService.findOne(id);
   }
@@ -38,7 +39,7 @@ export class UserController {
   @UseInterceptors(FileInterceptor('image'))
   @ApiOperation({ summary: 'Upload profile image' })
   @ApiResponse({ status: 200, description: 'Profile image uploaded successfully.' })
-  async uploadImage(@Request() req, @UploadedFile() file: Express.Multer.File, @Body() uploadImageDto: UploadImageDto) {
+  async uploadImage(@Request() req, @UploadedFile() file: Express.Multer.File, @Body() uploadImageDto: UploadImageDto): Promise<object> {
     const userId = req.user.sub;
     return await this.userService.updateProfileImage(userId, uploadImageDto, file);
   }
@@ -64,7 +65,11 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'Profile deleted successfully.' })
   async removeProfile(@Request() req): Promise<void> {
     const id = req.user.sub;
-    return await this.userService.removeUser(id);
+    const user = await this.userService.findOne(id);
+    if (user.role === 'superadmin') {
+      throw new Error('Superadmin cannot be deleted.');
+    }
+    await this.userService.removeUser(id);
   }
 
   @Put(':id/image')
@@ -77,7 +82,7 @@ export class UserController {
     @Param('id', ParseIntPipe) userId: number,
     @UploadedFile() file: Express.Multer.File,
     @Body() uploadImageDto: UploadImageDto
-  ) {
+  ): Promise<object> {
     return await this.userService.updateProfileImage(userId, uploadImageDto, file);
   }
 
@@ -110,7 +115,7 @@ export class UserController {
   @ApiOperation({ summary: 'Delete a user by ID' })
   @ApiResponse({ status: 200, description: 'User deleted successfully.' })
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
-    return await this.userService.removeUser(id);
+    await this.userService.removeUser(id);
   }
 
   @UseGuards(SuperAdminGuard)
