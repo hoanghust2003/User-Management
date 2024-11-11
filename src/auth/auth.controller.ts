@@ -22,8 +22,6 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('login')
   async signIn(@Body() authDto: AuthDto) {
-    // console.log('Đang cố gắng đăng nhập với dữ liệu:', signInDto);
-
     return await this.authService.signIn(authDto.username, authDto.password);
   }
 

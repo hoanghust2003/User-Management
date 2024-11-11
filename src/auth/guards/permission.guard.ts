@@ -10,25 +10,25 @@ export class PermissionGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     
     const request = context.switchToHttp().getRequest();
-    const user = request.user; // Người dùng đã đăng nhập
+    const user = request.user; 
     const requiredPermission = this.reflector.get<Permissions>('permission', context.getHandler());
 
-    // Kiểm tra xem người dùng đã đăng nhập chưa
+    // Check if the user is logged in
     if (!user) {
       throw new UnauthorizedException('You must be logged in to access this resource');
     }
     const user_object = await this.authService.findOne(user.sub);
-    // Nếu không có yêu cầu permission, cho phép truy cập
+    // If no permission is required, allow access
     if (!requiredPermission) {
       return true; 
     }
 
-    // Nếu là Admin, cho phép truy cập  
+    // If the user is an admin or super admin, allow access  
     if (user_object.role === UserRole.ADMIN || user_object.role === UserRole.SUPER_ADMIN) {
       return true; 
     }
 
-    // Kiểm tra xem người dùng có thuộc nhóm nào có quyền không
+    // Check if the user has the required permission
     const hasPermission = await this.authService.hasPermission(user.id, requiredPermission);
     if (!hasPermission) {
       throw new ForbiddenException('You do not have permission to access this resource');

@@ -11,8 +11,8 @@ import { ormConfig } from './config/ormconfig';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true, // ConfigModule sẽ là module toàn cục
-    }), // Nạp các biến từ file .env
+      isGlobal: true, 
+    }),
     TypeOrmModule.forRoot(ormConfig),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'), // Adjust path as needed

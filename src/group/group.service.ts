@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, Equal, In, Repository } from 'typeorm';
+import { DeepPartial, In, Repository } from 'typeorm';
 import { Group } from '../entities/group.entity';
 import { User } from '../entities/user.entity';
 import { GroupPermission } from 'src/entities/group-permission.entity';
@@ -21,22 +21,22 @@ export class GroupService {
   
   ) {}
 
-  // Lấy danh sách nhóm
+  // Get a list of all groups
   async findAll(): Promise<Group[]> {
     return await this.groupRepository.find();
   }
-  // Xem thông tin nhóm
-  async findGroupById(id: number): Promise<Object> {
+  // Get information about a specific group
+  async findGroupById(id: number): Promise<object> {
     const group = await this.groupRepository.findOne({ where: { id }});
     if (!group) {
       throw new Error('Group not found');
     }
-    // Tìm danh sách thành viên của nhóm
+    // Get a list of members in the group
     const userGroups = await this.userGroupRepository.find({ where: { group: { id } }, relations: ['user'] });
     const members = userGroups.map(userGroup => {
       const user = userGroup.user;
   
-      // Trả về các trường cần thiết của user, bao gồm ImagePath
+      // Return only necessary user information
       return {
         id: user.id,
         username: user.username,
@@ -45,11 +45,10 @@ export class GroupService {
       };
     });
 
-    // Tìm danh sách quyền của nhóm
+    // Find all permissions of the group
     const groupPermissions = await this.groupPermissionRepository.find({ where: { group: { id } } });
     const permissions = groupPermissions.map(permission => permission.permission);
 
-    // Tạo đối tượng trả về
     const groupInfo = {
         group,
         members,
@@ -58,25 +57,25 @@ export class GroupService {
     return groupInfo;
   }
 
-  // Thêm nhóm
-  async createGroup(name: string, description: string): Promise<any> {
+  // Create a new group
+  async createGroup(name: string, description: string): Promise<object> {
     const group = await this.groupRepository.create({ name , description});
     await this.groupRepository.save(group);
     return await this.findGroupById(group.id);
   }
 
-  // Sửa nhóm
-  async updateGroup(id: number, name: string, description: string): Promise<any> {
+  // Update a group
+  async updateGroup(id: number, name: string, description: string): Promise<object> {
     await this.groupRepository.update(id, { name, description });
     return await this.findGroupById(id);
   }
 
-  // Xóa nhóm
+  // Delete a group
   async removeGroup(id: number): Promise<void> {
     await this.groupRepository.delete(id);
   }
 
-  // Thêm thành viên vào nhóm
+  // Add a member to a group
   async addMemberToGroup(groupId: number, userId: number): Promise<UserGroup> {
     // Kiểm tra xem nhóm và người dùng có tồn tại không
     const group = await this.groupRepository.findOne({ where: { id: groupId } });
@@ -86,7 +85,7 @@ export class GroupService {
       throw new Error('Group or User not found');
     }
   
-    // Kiểm tra xem người dùng đã có trong nhóm chưa
+    // Check if the user is already a member of the group
     const existingUserGroup = await this.userGroupRepository.findOne({
       where: { user: { id: userId }, group: { id: groupId } },
     });
@@ -95,13 +94,13 @@ export class GroupService {
       throw new Error('User is already a member of this group');
     }
   
-    // Nếu người dùng chưa có trong nhóm, tiến hành thêm
+    // If the user is not a member of the group, create a new UserGroup record
     const userGroup = await this.userGroupRepository.create({ user, group });
     return await this.userGroupRepository.save(userGroup);
   }
 
-  // Xóa thành viên khỏi nhóm
-  async removeMemberFromGroup(groupId: number, userId: number): Promise<any> {
+  // Delete a member from a group
+  async removeMemberFromGroup(groupId: number, userId: number): Promise<object> {
     const userGroup = await this.userGroupRepository.findOne({
       where: { group: { id: groupId }, user: { id: userId } },
     });
@@ -109,48 +108,45 @@ export class GroupService {
     if (!userGroup) {
       throw new Error('User is not a member of this group');
     }
-  
-    // Xóa bản ghi UserGroup
+
     await this.userGroupRepository.delete(userGroup.id);
     return await this.findGroupById(groupId);
   }
 
-  // Thêm quyền cho nhóm
-  async addPermissionToGroup(groupId: number, permissions: Permissions[]): Promise<any> {
+  // Add some permissions to a group
+  async addPermissionToGroup(groupId: number, permissions: Permissions[]): Promise<object> {
     const group = await this.groupRepository.findOne({where: {id: groupId}});
 
     if (!group) {
       throw new Error('Group not found');
     }
 
-    const addedPermissions: GroupPermission[] = [];
+    
 
     for (const permission of permissions) {
-      // Kiểm tra xem quyền đã tồn tại trong nhóm chưa
+      // Check if the permission already exists in the group
       const existingPermission = await this.groupPermissionRepository.findOne({
         where: { group: { id: groupId }, permission: In([permission])},
       });
 
-      // Nếu quyền chưa tồn tại, tạo và lưu quyền mới
+      // If the permission does not exist, create a new GroupPermission record
       if (!existingPermission) {
         const newPermission = await this.groupPermissionRepository.create({ group, permission } as unknown as DeepPartial<GroupPermission>);
-        const savedPermission = await this.groupPermissionRepository.save(newPermission);
-        addedPermissions.push(savedPermission);
+        await this.groupPermissionRepository.save(newPermission);
       }
     }
-
     return await this.findGroupById(groupId);
   }
 
-  // Xóa quyền khỏi nhóm
-  async removePermissionFromGroup(groupId: number, permissions: Permissions[]): Promise<any> {
+  // Remove some permissions from a group
+  async removePermissionFromGroup(groupId: number, permissions: Permissions[]): Promise<object> {
     const group = await this.groupRepository.findOne({where: {id: groupId}});
 
     if (!group) {
       throw new Error('Group not found');
     }
 
-    // Tìm quyền cần xóa trong nhóm
+    // Find the permission in the group
     for (const permission of permissions) {
       
     const permissionToRemove = await this.groupPermissionRepository.findOne({
@@ -161,7 +157,7 @@ export class GroupService {
       throw new Error('Permission not found in this group');
     }
 
-    // Xóa quyền khỏi nhóm
+    // Remove the permission from the group
     await this.groupPermissionRepository.delete(permissionToRemove.id);
     }
     return await this.findGroupById(groupId);

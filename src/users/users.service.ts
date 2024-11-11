@@ -7,6 +7,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import * as bcrypt from 'bcrypt';
+import { UserInfo } from 'src/common/interface/user-info.interface';
 
 
 @Injectable()
@@ -25,7 +26,7 @@ export class UserService {
     return await this.userRepository.findOne({ where: { username } });
   }
 
-  async updateProfileImage(userId: number, uploadImageDto: UploadImageDto, file: Express.Multer.File): Promise<any> {
+  async updateProfileImage(userId: number, uploadImageDto: UploadImageDto, file: Express.Multer.File): Promise<object> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
     if (!user) {
@@ -34,16 +35,16 @@ export class UserService {
 
     const uploadPath = process.env.UPLOADS_DIR;
 
-    // Tạo thư mục để lưu ảnh nếu chưa tồn tại
+    // Make sure upload directory exists
     try {
       await fs.promises.mkdir(uploadPath, { recursive: true });
     } catch (error) {
       console.error('Error creating upload directory:', error);
     }
 
-    // Kiểm tra xem user có ảnh đại diện trước đó không
+    // Check if user already has a profile image
     if (user.profileImage) {
-      // Xóa ảnh cũ nếu tồn tại
+      // Remove old profile image if exists
       const oldImagePath = path.join(uploadPath, user.profileImage);
       try {
         await fs.promises.unlink(oldImagePath);
@@ -52,58 +53,58 @@ export class UserService {
       }
     }
 
-    // Tạo tên file duy nhất cho ảnh mới
+    // Make unique file's name
     const fileName = `${userId}-${Date.now()}-${file.originalname}`;
     const filePath = path.join(uploadPath, fileName);
 
-    // Lưu file vào thư mục uploads
+    // save file 
     await fs.promises.writeFile(filePath, file.buffer);
 
-    // Cập nhật đường dẫn ảnh mới cho user
+    // Update new profileImage
     user.profileImage = fileName; 
     await this.userRepository.save(user);
 
     // console.log('user: ', user);
 
-    return await this.findOne(userId); // Trả về thông tin user đã cập nhật
+    return await this.findOne(userId); 
   }
 
-  async findAll(): Promise<any[]> {
+  async findAll(): Promise<object[]> {
     const users = await this.userRepository.find({
       select: ['id', 'username', 'role', 'profileImage'],
     });
 
-    // Thêm trường ImagePath cho mỗi user
     return users.map(user => ({
       id: user.id,
       username: user.username,
       role: user.role,
+      //change profileImage to ImagePath
       ImagePath: `http://localhost:${process.env.PORT}/uploads/${user.profileImage}`, // Tạo đường dẫn đầy đủ cho profileImage
     }));
   }
 
-  async findOne(id: number): Promise<any> {
+  async findOne(id: number): Promise<UserInfo> {
     const user = await this.userRepository.findOne({ 
       select: ['id', 'username', 'role', 'profileImage'],
       where: { id } 
     });
     if (user) {
       return {
-        id: user.id,
-        username: user.username,
-        role: user.role,
-        ImagePath: `http://localhost:${process.env.PORT}/uploads/${user.profileImage}`, // Trả về đường dẫn ảnh thay vì profileImage
+        "id": user.id,
+        "username": user.username,
+        "role": user.role,
+        "ImagePath": `http://localhost:${process.env.PORT}/uploads/${user.profileImage}`, // Trả về đường dẫn ảnh thay vì profileImage
       };
     } else {
       return null; 
     }
   }
 
-  async updateUser(id: number, username: string): Promise<any> {
+  async updateUser(id: number, username: string): Promise<object> {
     await this.userRepository.update(id, { username});
     return await this.findOne(id);
   }
-  async updatePassword(id: number, oldpassword: string, newpassword: string): Promise<any> {
+  async updatePassword(id: number, oldpassword: string, newpassword: string): Promise<object> {
     const user = await this.userRepository.findOne({ where: { id}});
     const isMatch = await bcrypt.compare(oldpassword, user.password);
     if (!isMatch) {
@@ -118,7 +119,7 @@ export class UserService {
     await this.userRepository.delete(id);
   }
 
-  async assignAdminRole(userId: number): Promise<any> {
+  async assignAdminRole(userId: number): Promise<object> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
     if (!user) {
@@ -130,7 +131,7 @@ export class UserService {
     return await this.findOne(userId);
   }
   
-  async removeAdminRole(userId: number): Promise<any> {
+  async removeAdminRole(userId: number): Promise<object> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
     if (!user) {

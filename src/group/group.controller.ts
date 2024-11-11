@@ -11,7 +11,6 @@ import {
 } from '@nestjs/common';
 import { GroupService } from './group.service';
 import { Group } from '../entities/group.entity';
-import { GroupPermission } from '../entities/group-permission.entity';
 import { UserGroup } from '../entities/user-group.entity';
 import { Permission } from '../common/decorator/permission.decorator';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
@@ -35,14 +34,14 @@ export class GroupController {
   // Create a new group
   @Post()
   @Permission(Permissions.CREATE_GROUP)
-  async createGroup(@Body() createGroupDto: CreateGroupDto): Promise<Group> {
+  async createGroup(@Body() createGroupDto: CreateGroupDto): Promise<object> {
     return await this.groupService.createGroup(createGroupDto.name, createGroupDto.description);
   }
 
   // Get information about a specific group
   @Get(':id')
   @Permission(Permissions.VIEW_GROUP)
-  async getGroup(@Param('id', new ParseIntPipe()) id: number): Promise<Object> {
+  async getGroup(@Param('id', new ParseIntPipe()) id: number): Promise<object> {
     return await this.groupService.findGroupById(id);
   }
 
@@ -52,7 +51,7 @@ export class GroupController {
   async updateGroup(
     @Param('id', new ParseIntPipe()) id: number,
     @Body() updateGroupDto: UpdateGroupDto
-  ): Promise<Group> {
+  ): Promise<object> {
     return await this.groupService.updateGroup(id, updateGroupDto.name, updateGroupDto.description);
   }
 
@@ -78,8 +77,8 @@ export class GroupController {
   @Permission(Permissions.REMOVE_MEMBER_FROM_GROUP)
   async removeMemberFromGroup(
     @Param('groupId', new ParseIntPipe()) groupId: number,
-    @Param('userId', new ParseIntPipe()) userId : number,
-  ): Promise<void> { 
+    @Param('userId', new ParseIntPipe()) userId: number,
+  ): Promise<void> {
     await this.groupService.removeMemberFromGroup(groupId, userId);
   }
 
@@ -89,7 +88,7 @@ export class GroupController {
   async addPermissionToGroup(
     @Param('groupId', new ParseIntPipe()) groupId: number,
     @Body('permissions') permissionArrayDto: PermissionArrayDto,
-  ): Promise<GroupPermission[]> {
+  ): Promise<object> {
     return await this.groupService.addPermissionToGroup(groupId, permissionArrayDto.permissions);
   }
 

@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UserGroup } from 'src/entities/user-group.entity';
 import { AuthDto } from './dto/auth.dto'; // Import DTO
 import * as bcrypt from 'bcrypt'; // Import bcrypt để mã hóa mật khẩu
-import { User } from 'src/entities/user.entity';
+import { UserInfo } from 'src/common/interface/user-info.interface';
 
 @Injectable()
 export class AuthService {
@@ -30,7 +30,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Kiểm tra mật khẩu đã được mã hóa
+    // Check if the password is correct
     const isPasswordMatching = await bcrypt.compare(password, user.password);
     if (!isPasswordMatching) {
       throw new UnauthorizedException('Invalid credentials');
@@ -46,27 +46,27 @@ export class AuthService {
   async signUp(authDto: AuthDto): Promise<void> {
     const { username, password } = authDto;
 
-    // Kiểm tra xem tên đăng nhập đã tồn tại chưa
+    // Check if the username already exists
     const existingUser = await this.userService.findOneByUsername(username);
     if (existingUser) {
       throw new ConflictException('Username already exists');
     }
 
-    // Mã hóa mật khẩu trước khi lưu vào cơ sở dữ liệu
+    // Encrypt the password
     const hashedPassword = await bcrypt.hash(password, process.env.SALT_ROUNDS || 10);
 
-    // Lưu người dùng mới vào cơ sở dữ liệu
+    // Save the user to the database
     await this.userService.createUser({
       username,
       password: hashedPassword,
     });
   }
 
-  async findOne(id: number): Promise<User> {
+  async findOne(id: number): Promise<UserInfo> {
     return await this.userService.findOne(id);
   }
 
-  // Kiểm tra xem người dùng có quyền hay không
+  // Check if a user has a specific permission
   async hasPermission(userId: number, permission: Permissions): Promise<boolean> { 
     const result = await this.groupPermissionRepository
       .createQueryBuilder('groupPermission')
@@ -76,7 +76,6 @@ export class AuthService {
       .andWhere('groupPermission.permission = :permission', { permission })
       .getOne();
   
-    // Nếu tìm thấy quyền, trả về true, nếu không trả về false
     return !!result;
   }
   
