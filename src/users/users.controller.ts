@@ -9,19 +9,26 @@ import { SuperAdminGuard } from 'src/auth/guards/superadmin.guard';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Permissions } from 'src/common/enums/permissions.enum';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+@ApiTags('users')
+@ApiBearerAuth()
 @UseGuards(AuthGuard, PermissionGuard)
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
-  @Permission(Permissions.VIEW_LIST_USERS) 
+  @Permission(Permissions.VIEW_LIST_USERS)
+  @ApiOperation({ summary: 'Get all users' })
+  @ApiResponse({ status: 200, description: 'Return all users.' })
   async findAll(): Promise<object[]> {
     return await this.userService.findAll();
   }
 
   @Get('me')
+  @ApiOperation({ summary: 'Get profile of the logged-in user' })
+  @ApiResponse({ status: 200, description: 'Return the profile of the logged-in user.' })
   async getProfile(@Request() req) {
     const id = req.user.sub;
     return await this.userService.findOne(id);
@@ -29,24 +36,32 @@ export class UserController {
 
   @Put('me/image')
   @UseInterceptors(FileInterceptor('image'))
+  @ApiOperation({ summary: 'Upload profile image' })
+  @ApiResponse({ status: 200, description: 'Profile image uploaded successfully.' })
   async uploadImage(@Request() req, @UploadedFile() file: Express.Multer.File, @Body() uploadImageDto: UploadImageDto) {
-    const userId = req.user.sub; 
-    return await this.userService.updateProfileImage(userId, uploadImageDto, file); // Truyền userId, uploadImageDto, và file
+    const userId = req.user.sub;
+    return await this.userService.updateProfileImage(userId, uploadImageDto, file);
   }
 
   @Put('me')
-  async updateProfile(@Request() req, @Body() updateUserDto : UpdateUserDto): Promise<object> {
+  @ApiOperation({ summary: 'Update profile' })
+  @ApiResponse({ status: 200, description: 'Profile updated successfully.' })
+  async updateProfile(@Request() req, @Body() updateUserDto: UpdateUserDto): Promise<object> {
     const id = req.user.sub;
     return await this.userService.updateUser(id, updateUserDto.username);
   }
 
   @Put('me/password')
-  async changeProfilePassword(@Request() req, @Body() changePasswordDto : ChangePasswordDto): Promise<object> {
+  @ApiOperation({ summary: 'Change profile password' })
+  @ApiResponse({ status: 200, description: 'Password changed successfully.' })
+  async changeProfilePassword(@Request() req, @Body() changePasswordDto: ChangePasswordDto): Promise<object> {
     const id = req.user.sub;
     return await this.userService.updatePassword(id, changePasswordDto.oldpassword, changePasswordDto.newpassword);
   }
 
   @Delete('me')
+  @ApiOperation({ summary: 'Delete profile' })
+  @ApiResponse({ status: 200, description: 'Profile deleted successfully.' })
   async removeProfile(@Request() req): Promise<void> {
     const id = req.user.sub;
     return await this.userService.removeUser(id);
@@ -54,47 +69,61 @@ export class UserController {
 
   @Put(':id/image')
   @UseInterceptors(FileInterceptor('image'))
-  @Permission(Permissions.UPDATE_OTHER_USER_IMAGE) 
+  @Permission(Permissions.UPDATE_OTHER_USER_IMAGE)
+  @ApiOperation({ summary: 'Change avatar of another user' })
+  @ApiResponse({ status: 200, description: 'Avatar changed successfully.' })
   async changeAvatarOfOtherUser(
     @Param('id', ParseIntPipe) userId: number,
     @UploadedFile() file: Express.Multer.File,
     @Body() uploadImageDto: UploadImageDto
   ) {
-    return await this.userService.updateProfileImage(userId, uploadImageDto, file); 
+    return await this.userService.updateProfileImage(userId, uploadImageDto, file);
   }
 
   @Get(':id')
-  @Permission(Permissions.VIEW_OTHER_USER) 
+  @Permission(Permissions.VIEW_OTHER_USER)
+  @ApiOperation({ summary: 'Get a user by ID' })
+  @ApiResponse({ status: 200, description: 'Return the user by ID.' })
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<object> {
     return await this.userService.findOne(id);
   }
 
   @Put(':id')
-  @Permission(Permissions.UPDATE_OTHER_USER) 
+  @Permission(Permissions.UPDATE_OTHER_USER)
+  @ApiOperation({ summary: 'Update a user by ID' })
+  @ApiResponse({ status: 200, description: 'User updated successfully.' })
   async update(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto): Promise<object> {
     return await this.userService.updateUser(id, updateUserDto.username);
   }
 
   @Put(':id/password')
-  @Permission(Permissions.CHANGE_OTHER_USER_PASSWORD) 
-  async changePassword(@Param('id', ParseIntPipe) id: number, @Body() changePasswordDto : ChangePasswordDto): Promise<object> {
+  @Permission(Permissions.CHANGE_OTHER_USER_PASSWORD)
+  @ApiOperation({ summary: 'Change password of another user' })
+  @ApiResponse({ status: 200, description: 'Password changed successfully.' })
+  async changePassword(@Param('id', ParseIntPipe) id: number, @Body() changePasswordDto: ChangePasswordDto): Promise<object> {
     return await this.userService.updatePassword(id, changePasswordDto.oldpassword, changePasswordDto.newpassword);
   }
 
   @Delete(':id')
   @Permission(Permissions.DELETE_OTHER_USER)
+  @ApiOperation({ summary: 'Delete a user by ID' })
+  @ApiResponse({ status: 200, description: 'User deleted successfully.' })
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return await this.userService.removeUser(id);
   }
 
   @UseGuards(SuperAdminGuard)
   @Put(':id/roles/admin')
+  @ApiOperation({ summary: 'Assign admin role to a user' })
+  @ApiResponse({ status: 200, description: 'Admin role assigned successfully.' })
   async addRole(@Param('id', ParseIntPipe) id: number): Promise<object> {
     return await this.userService.assignAdminRole(id);
   }
 
   @UseGuards(SuperAdminGuard)
   @Delete(':id/roles/admin')
+  @ApiOperation({ summary: 'Remove admin role from a user' })
+  @ApiResponse({ status: 200, description: 'Admin role removed successfully.' })
   async removeRole(@Param('id', ParseIntPipe) id: number): Promise<object> {
     return await this.userService.removeAdminRole(id);
   }
