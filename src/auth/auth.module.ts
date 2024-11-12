@@ -4,8 +4,8 @@ import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { GroupPermission } from 'src/entities/group-permission.entity';
-import { UserGroup } from 'src/entities/user-group.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from 'src/entities/user.entity';
 
 @Module({
   imports: [
@@ -14,7 +14,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       global: true,
       signOptions: { expiresIn: '60m' },
     }),
-    TypeOrmModule.forFeature([GroupPermission, UserGroup]),
+    TypeOrmModule.forFeature([GroupPermission, User]),
   ],
   controllers: [AuthController],
   providers: [AuthService],

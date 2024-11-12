@@ -10,7 +10,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Permissions } from 'src/common/enums/permissions.enum';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiConsumes } from '@nestjs/swagger';
-import { UserInfo } from 'src/common/interface/user-info.interface';
+import { User } from 'src/entities/user.entity';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -23,14 +23,14 @@ export class UserController {
   @Permission(Permissions.VIEW_LIST_USERS)
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({ status: 200, description: 'Return all users.' })
-  async findAll(): Promise<object[]> {
+  async findAll(): Promise<User[]> {
     return await this.userService.findAll();
   }
 
   @Get('me')
   @ApiOperation({ summary: 'Get profile of the logged-in user' })
   @ApiResponse({ status: 200, description: 'Return the profile of the logged-in user.' })
-  async getProfile(@Request() req): Promise<UserInfo> {
+  async getProfile(@Request() req): Promise<User> {
     const id = req.user.sub;
     return await this.userService.findOne(id);
   }
@@ -39,7 +39,7 @@ export class UserController {
   @UseInterceptors(FileInterceptor('image'))
   @ApiOperation({ summary: 'Upload profile image' })
   @ApiResponse({ status: 200, description: 'Profile image uploaded successfully.' })
-  async uploadImage(@Request() req, @UploadedFile() file: Express.Multer.File, @Body() uploadImageDto: UploadImageDto): Promise<object> {
+  async uploadImage(@Request() req, @UploadedFile() file: Express.Multer.File, @Body() uploadImageDto: UploadImageDto): Promise<User> {
     const userId = req.user.sub;
     return await this.userService.updateProfileImage(userId, uploadImageDto, file);
   }
@@ -47,7 +47,7 @@ export class UserController {
   @Put('me')
   @ApiOperation({ summary: 'Update profile' })
   @ApiResponse({ status: 200, description: 'Profile updated successfully.' })
-  async updateProfile(@Request() req, @Body() updateUserDto: UpdateUserDto): Promise<object> {
+  async updateProfile(@Request() req, @Body() updateUserDto: UpdateUserDto): Promise<User> {
     const id = req.user.sub;
     return await this.userService.updateUser(id, updateUserDto.username);
   }
@@ -55,7 +55,7 @@ export class UserController {
   @Put('me/password')
   @ApiOperation({ summary: 'Change profile password' })
   @ApiResponse({ status: 200, description: 'Password changed successfully.' })
-  async changeProfilePassword(@Request() req, @Body() changePasswordDto: ChangePasswordDto): Promise<object> {
+  async changeProfilePassword(@Request() req, @Body() changePasswordDto: ChangePasswordDto): Promise<User> {
     const id = req.user.sub;
     return await this.userService.updatePassword(id, changePasswordDto.oldpassword, changePasswordDto.newpassword);
   }
@@ -82,7 +82,7 @@ export class UserController {
     @Param('id', ParseIntPipe) userId: number,
     @UploadedFile() file: Express.Multer.File,
     @Body() uploadImageDto: UploadImageDto
-  ): Promise<object> {
+  ): Promise<User> {
     return await this.userService.updateProfileImage(userId, uploadImageDto, file);
   }
 
@@ -90,7 +90,7 @@ export class UserController {
   @Permission(Permissions.VIEW_OTHER_USER)
   @ApiOperation({ summary: 'Get a user by ID' })
   @ApiResponse({ status: 200, description: 'Return the user by ID.' })
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<object> {
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<User> {
     return await this.userService.findOne(id);
   }
 
@@ -98,7 +98,7 @@ export class UserController {
   @Permission(Permissions.UPDATE_OTHER_USER)
   @ApiOperation({ summary: 'Update a user by ID' })
   @ApiResponse({ status: 200, description: 'User updated successfully.' })
-  async update(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto): Promise<object> {
+  async update(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto): Promise<User> {
     return await this.userService.updateUser(id, updateUserDto.username);
   }
 
@@ -106,7 +106,7 @@ export class UserController {
   @Permission(Permissions.CHANGE_OTHER_USER_PASSWORD)
   @ApiOperation({ summary: 'Change password of another user' })
   @ApiResponse({ status: 200, description: 'Password changed successfully.' })
-  async changePassword(@Param('id', ParseIntPipe) id: number, @Body() changePasswordDto: ChangePasswordDto): Promise<object> {
+  async changePassword(@Param('id', ParseIntPipe) id: number, @Body() changePasswordDto: ChangePasswordDto): Promise<User> {
     return await this.userService.updatePassword(id, changePasswordDto.oldpassword, changePasswordDto.newpassword);
   }
 
@@ -122,7 +122,7 @@ export class UserController {
   @Put(':id/roles/admin')
   @ApiOperation({ summary: 'Assign admin role to a user' })
   @ApiResponse({ status: 200, description: 'Admin role assigned successfully.' })
-  async addRole(@Param('id', ParseIntPipe) id: number): Promise<object> {
+  async addRole(@Param('id', ParseIntPipe) id: number): Promise<User> {
     return await this.userService.assignAdminRole(id);
   }
 
@@ -130,7 +130,7 @@ export class UserController {
   @Delete(':id/roles/admin')
   @ApiOperation({ summary: 'Remove admin role from a user' })
   @ApiResponse({ status: 200, description: 'Admin role removed successfully.' })
-  async removeRole(@Param('id', ParseIntPipe) id: number): Promise<object> {
+  async removeRole(@Param('id', ParseIntPipe) id: number): Promise<User> {
     return await this.userService.removeAdminRole(id);
   }
 }

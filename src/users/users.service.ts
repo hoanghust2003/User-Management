@@ -7,8 +7,6 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import * as bcrypt from 'bcrypt';
-import { UserInfo } from 'src/common/interface/user-info.interface';
-
 
 @Injectable()
 export class UserService {
@@ -26,7 +24,7 @@ export class UserService {
     return await this.userRepository.findOne({ where: { username } });
   }
 
-  async updateProfileImage(userId: number, uploadImageDto: UploadImageDto, file: Express.Multer.File): Promise<object> {
+  async updateProfileImage(userId: number, uploadImageDto: UploadImageDto, file: Express.Multer.File): Promise<User> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
     if (!user) {
@@ -69,42 +67,26 @@ export class UserService {
     return await this.findOne(userId); 
   }
 
-  async findAll(): Promise<object[]> {
-    const users = await this.userRepository.find({
-      select: ['id', 'username', 'role', 'profileImage'],
-    });
-
-    return users.map(user => ({
-      id: user.id,
-      username: user.username,
-      role: user.role,
-      //change profileImage to ImagePath
-      ImagePath: `http://localhost:${process.env.PORT}/uploads/${user.profileImage}`, // Tạo đường dẫn đầy đủ cho profileImage
-    }));
+  async findAll(): Promise<User[]> {
+    const users = await this.userRepository.find();
+    return users;
   }
 
-  async findOne(id: number): Promise<UserInfo> {
-    const user = await this.userRepository.findOne({ 
-      select: ['id', 'username', 'role', 'profileImage'],
-      where: { id } 
-    });
-    if (user) {
-      return {
-        "id": user.id,
-        "username": user.username,
-        "role": user.role,
-        "ImagePath": `http://localhost:${process.env.PORT}/uploads/${user.profileImage}`, // Trả về đường dẫn ảnh thay vì profileImage
-      };
-    } else {
-      return null; 
+  async findOne(id: number): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id } });
+
+    if (user && user.profileImage) {
+      user.profileImage = `http://localhost:${process.env.PORT}/uploads/${user.profileImage}`;
     }
+    
+    return user;
   }
 
-  async updateUser(id: number, username: string): Promise<object> {
+  async updateUser(id: number, username: string): Promise<User> {
     await this.userRepository.update(id, { username});
     return await this.findOne(id);
   }
-  async updatePassword(id: number, oldpassword: string, newpassword: string): Promise<object> {
+  async updatePassword(id: number, oldpassword: string, newpassword: string): Promise<User> {
     const user = await this.userRepository.findOne({ where: { id}});
     const isMatch = await bcrypt.compare(oldpassword, user.password);
     if (!isMatch) {
@@ -120,7 +102,7 @@ export class UserService {
     await this.userRepository.delete(id);
   }
 
-  async assignAdminRole(userId: number): Promise<object> {
+  async assignAdminRole(userId: number): Promise<User> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
     if (!user) {
@@ -132,7 +114,7 @@ export class UserService {
     return await this.findOne(userId);
   }
   
-  async removeAdminRole(userId: number): Promise<object> {
+  async removeAdminRole(userId: number): Promise<User> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
     if (!user) {

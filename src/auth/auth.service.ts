@@ -4,10 +4,9 @@ import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import { GroupPermission } from 'src/entities/group-permission.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserGroup } from 'src/entities/user-group.entity';
 import { AuthDto } from './dto/auth.dto'; // Import DTO
 import * as bcrypt from 'bcrypt'; // Import bcrypt để mã hóa mật khẩu
-import { UserInfo } from 'src/common/interface/user-info.interface';
+import { User } from 'src/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -16,15 +15,19 @@ export class AuthService {
     private jwtService: JwtService,
     @InjectRepository(GroupPermission)
     private groupPermissionRepository: Repository<GroupPermission>,
-    @InjectRepository(UserGroup)
-    private userGroupRepository: Repository<UserGroup>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
   ) {}
 
   async signIn(
     username: string, 
     password: string
   ): Promise<{ access_token: string }> {
-    const user = await this.userService.findOneByUsername(username);
+    const user = await this.userRepository
+    .createQueryBuilder('user')
+    .addSelect('user.password')
+    .where('user.username = :username', { username: username })
+    .getOne();
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -62,7 +65,7 @@ export class AuthService {
     });
   }
 
-  async findOne(id: number): Promise<UserInfo> {
+  async findOne(id: number): Promise<User> {
     return await this.userService.findOne(id);
   }
 
