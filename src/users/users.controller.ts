@@ -39,6 +39,7 @@ export class UserController {
   @UseInterceptors(FileInterceptor('image'))
   @ApiOperation({ summary: 'Upload profile image' })
   @ApiResponse({ status: 200, description: 'Profile image uploaded successfully.' })
+  @ApiConsumes('multipart/form-data')
   async uploadImage(@Request() req, @UploadedFile() file: Express.Multer.File, @Body() uploadImageDto: UploadImageDto): Promise<User> {
     const userId = req.user.sub;
     return await this.userService.updateProfileImage(userId, uploadImageDto, file);
@@ -114,6 +115,7 @@ export class UserController {
   @Permission(Permissions.DELETE_OTHER_USER)
   @ApiOperation({ summary: 'Delete a user by ID' })
   @ApiResponse({ status: 200, description: 'User deleted successfully.' })
+  @ApiResponse({ status: 404, description: 'User not found.' })
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.userService.removeUser(id);
   }

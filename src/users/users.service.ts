@@ -94,7 +94,11 @@ export class UserService {
     return await this.findOne(id);
   }
   async updatePassword(id: number, oldpassword: string, newpassword: string): Promise<User> {
-    const user = await this.userRepository.findOne({ where: { id}});
+    const user = await this.userRepository
+    .createQueryBuilder('user')
+    .addSelect('user.password') // Lấy thêm cột password
+    .where('user.id = :id', { id : id })
+    .getOne();
     const isMatch = await bcrypt.compare(oldpassword, user.password);
     if (!isMatch) {
       throw new NotFoundException('Old password is not correct');
@@ -105,7 +109,10 @@ export class UserService {
   }
 
   async removeUser(id: number): Promise<void> {
-    
+    const user = await this.findOne(id);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
     await this.userRepository.delete(id);
   }
 
