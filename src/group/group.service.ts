@@ -25,6 +25,7 @@ export class GroupService {
   async findAll(): Promise<Group[]> {
     return await this.groupRepository.find();
   }
+
   // Get information about a specific group
   async findGroupById(id: number): Promise<object> {
     const group = await this.groupRepository.findOne({ where: { id }});
@@ -35,7 +36,6 @@ export class GroupService {
     const userGroups = await this.userGroupRepository.find({ where: { group: { id } }, relations: ['user'] });
     const members = userGroups.map(userGroup => {
       const user = userGroup.user;
-  
       // Return only necessary user information
       return {
         id: user.id,
@@ -44,7 +44,6 @@ export class GroupService {
         ImagePath: `http://localhost:${process.env.PORT}/uploads/${user.profileImage}`, // Trả về đường dẫn ảnh
       };
     });
-
     // Find all permissions of the group
     const groupPermissions = await this.groupPermissionRepository.find({ where: { group: { id } } });
     const permissions = groupPermissions.map(permission => permission.permission);
@@ -84,7 +83,6 @@ export class GroupService {
     if (!group || !user) {
       throw new Error('Group or User not found');
     }
-  
     // Check if the user is already a member of the group
     const existingUserGroup = await this.userGroupRepository.findOne({
       where: { user: { id: userId }, group: { id: groupId } },
@@ -121,9 +119,7 @@ export class GroupService {
     if (!group) {
       throw new Error('Group not found');
     }
-
     
-
     for (const permission of permissions) {
       // Check if the permission already exists in the group
       const existingPermission = await this.groupPermissionRepository.findOne({

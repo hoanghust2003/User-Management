@@ -8,13 +8,12 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.enableCors(
     {
-      origin: '*', // Cho phép tất cả các nguồn
+      origin: '*', 
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
       allowedHeaders: 'Content-Type, Accept, Authorization',
     }
   );
 
-  // Cấu hình Swagger
   const config = new DocumentBuilder()
     .setTitle('API Documentation')
     .setDescription('The API description')

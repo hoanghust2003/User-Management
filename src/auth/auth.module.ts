@@ -20,10 +20,4 @@ import { TypeOrmModule } from '@nestjs/typeorm';
   providers: [AuthService],
   exports: [AuthService],
 })
-export class AuthModule {
-  // constructor() {
-  //   console.log('JWT_SECRET:', process.env.JWT_SECRET);
-  //   console.log('JWT_EXPIRATION_TIME:', process.env.JWT_EXPIRATION_TIME);
-  // }
-
-}
+export class AuthModule {}

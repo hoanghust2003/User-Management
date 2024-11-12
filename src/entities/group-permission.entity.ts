@@ -15,7 +15,4 @@ export class GroupPermission {
     enum: Permissions,
   })
   permission: Permissions;
-
-  // @Column({ type: 'boolean', default: true })
-  // is_active: boolean;
 }

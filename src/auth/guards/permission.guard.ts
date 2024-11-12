@@ -18,6 +18,7 @@ export class PermissionGuard implements CanActivate {
       throw new UnauthorizedException('You must be logged in to access this resource');
     }
     const user_object = await this.authService.findOne(user.sub);
+    
     // If no permission is required, allow access
     if (!requiredPermission) {
       return true; 
