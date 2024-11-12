@@ -69,6 +69,13 @@ export class UserService {
 
   async findAll(): Promise<User[]> {
     const users = await this.userRepository.find();
+
+    for (const user of users) {
+      if (user.profileImage) {
+        user.profileImage = `http://localhost:${process.env.PORT}/uploads/${user.profileImage}`;
+      }
+    }
+
     return users;
   }
 
@@ -78,7 +85,7 @@ export class UserService {
     if (user && user.profileImage) {
       user.profileImage = `http://localhost:${process.env.PORT}/uploads/${user.profileImage}`;
     }
-    
+
     return user;
   }
 
