@@ -24,7 +24,9 @@ export class UserService {
   private readonly USER_CACHE_KEY = 'user:';
   private readonly USERS_CACHE_KEY = 'users';
   private readonly GROUP_INFO_CACHE_KEY = 'group-info:';
-  private readonly CACHE_TTL = 3600;
+  private readonly USER_CACHE_TTL = 60;
+  private readonly USERS_CACHE_TTL = 120;
+
 
   async createUser(userData: Partial<User>): Promise<User> {
     const user = this.userRepository.create(userData);
@@ -42,7 +44,7 @@ export class UserService {
     }
     const user = await this.userRepository.findOne({ where: { username } });
     if (user) {
-      await this.cacheManager.set(cacheKey, user, this.CACHE_TTL);
+      await this.cacheManager.set(cacheKey, user, this.USER_CACHE_TTL);
     }
     return user;
   }  
@@ -123,7 +125,7 @@ export class UserService {
       }
     }
 
-    await this.cacheManager.set(this.USERS_CACHE_KEY, users, this.CACHE_TTL);
+    await this.cacheManager.set(this.USERS_CACHE_KEY, users, this.USERS_CACHE_TTL);
     return users;
   }
 
@@ -140,7 +142,7 @@ export class UserService {
     }
 
     if (user) {
-      await this.cacheManager.set(cacheKey, user, this.CACHE_TTL);
+      await this.cacheManager.set(cacheKey, user, this.USER_CACHE_TTL);
     }
 
     return user;

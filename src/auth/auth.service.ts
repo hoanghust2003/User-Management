@@ -23,7 +23,7 @@ export class AuthService {
   ) {}
 
   private readonly HAS_PERMISSION_CACHE_KEY = ':has-permission:';
-  private readonly CACHE_TTL = 3600;
+  private readonly CACHE_TTL = 30;
 
   async signIn(
     username: string, 

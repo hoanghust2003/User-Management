@@ -25,7 +25,7 @@ export class GroupService {
   private readonly GROUPS_CACHE_KEY = 'groups';
   private readonly GROUP_INFO_CACHE_KEY = 'group-info:';
   private readonly HAS_PERMISSION_CACHE_KEY = ':has-permission:';
-  private readonly CACHE_TTL = 3600;
+  private readonly GROUP_CACHE_TTL = 120;
 
   // Get a list of all groups
   async findAll(): Promise<Group[]> {
@@ -37,7 +37,7 @@ export class GroupService {
 
     const groups = await this.groupRepository.find();
     // Cache the result
-    await this.cacheManager.set(this.GROUPS_CACHE_KEY, groups, this.CACHE_TTL);
+    await this.cacheManager.set(this.GROUPS_CACHE_KEY, groups, this.GROUP_CACHE_TTL);
     return groups;
   }
 
@@ -76,7 +76,7 @@ export class GroupService {
         permissions,
     };
     // Save to cache
-    await this.cacheManager.set(cacheKey, groupInfo, this.CACHE_TTL);
+    await this.cacheManager.set(cacheKey, groupInfo, this.GROUP_CACHE_TTL);
 
     return groupInfo;
   }
