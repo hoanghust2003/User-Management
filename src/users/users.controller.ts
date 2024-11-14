@@ -11,6 +11,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { Permissions } from 'src/common/enums/permissions.enum';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiConsumes } from '@nestjs/swagger';
 import { User } from 'src/entities/user.entity';
+import { UserRole } from 'src/common/enums/user-role.enum';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -67,7 +68,7 @@ export class UserController {
   async removeProfile(@Request() req): Promise<void> {
     const id = req.user.sub;
     const user = await this.userService.findOne(id);
-    if (user.role === 'superadmin') {
+    if (user.role === UserRole.SUPER_ADMIN) {
       throw new Error('Superadmin cannot be deleted.');
     }
     await this.userService.removeUser(id);
