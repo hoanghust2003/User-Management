@@ -16,6 +16,7 @@ export enum Permissions {
   DELETE_GROUP = 'delete_group', 
   ADD_MEMBER_TO_GROUP = 'add_member_to_group', 
   REMOVE_MEMBER_FROM_GROUP = 'remove_member_from_group', 
+  VIEW_LIST_PERMISSIONS = 'view_list_permissions',
   ADD_PERMISSION_TO_GROUP = 'add_permissions_to_group', 
   REMOVE_PERMISSION_FROM_GROUP = 'remove_permissions_from_group', 
 

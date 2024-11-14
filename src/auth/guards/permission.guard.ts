@@ -1,11 +1,16 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AuthService } from '../auth.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
+import { UserService } from 'src/users/users.service';
+import { AuthService } from '../auth.service';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
-  constructor(private authService: AuthService, private reflector: Reflector) {}
+  constructor(
+    private userService: UserService,
+    private authService: AuthService,
+    private reflector: Reflector
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     
@@ -17,7 +22,7 @@ export class PermissionGuard implements CanActivate {
     if (!user) {
       throw new UnauthorizedException('You must be logged in to access this resource');
     }
-    const user_object = await this.authService.findOne(user.sub);
+    const user_object = await this.userService.findOne(user.sub);
     
     // If no permission is required, allow access
     if (!requiredPermission) {

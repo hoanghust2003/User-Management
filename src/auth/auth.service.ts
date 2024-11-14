@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, Inject } from '@nestjs/common';
 import { UserService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
@@ -7,6 +7,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AuthDto } from './dto/auth.dto'; // Import DTO
 import * as bcrypt from 'bcrypt'; // Import bcrypt để mã hóa mật khẩu
 import { User } from 'src/entities/user.entity';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class AuthService {
@@ -17,7 +19,11 @@ export class AuthService {
     private groupPermissionRepository: Repository<GroupPermission>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
+
+  private readonly HAS_PERMISSION_CACHE_KEY = ':has-permission:';
+  private readonly CACHE_TTL = 3600;
 
   async signIn(
     username: string, 
@@ -65,12 +71,14 @@ export class AuthService {
     });
   }
 
-  async findOne(id: number): Promise<User> {
-    return await this.userService.findOne(id);
-  }
-
   // Check if a user has a specific permission
   async hasPermission(userId: number, permission: Permissions): Promise<boolean> {
+    // Check if the result is in the cache
+    const cacheKey = userId + this.HAS_PERMISSION_CACHE_KEY + permission;
+    const cachedResult = await this.cacheManager.get<boolean>(cacheKey);
+    if (cachedResult !== undefined) {
+      return cachedResult;
+    }
     const result = await this.groupPermissionRepository
       .createQueryBuilder('groupPermission')
       .innerJoin('groupPermission.group', 'group')
@@ -78,7 +86,9 @@ export class AuthService {
       .where('userGroup.user.id = :userId', { userId })
       .andWhere('groupPermission.permission = :permission', { permission })
       .getOne();
-  
+
+    // Save the result to the cache
+    await this.cacheManager.set(cacheKey, !!result, this.CACHE_TTL);
     return !!result;
   }
   

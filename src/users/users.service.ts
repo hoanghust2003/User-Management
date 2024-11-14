@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
@@ -7,21 +7,57 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import * as bcrypt from 'bcrypt';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { UserGroup } from 'src/entities/user-group.entity';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
-  
+    @InjectRepository(UserGroup)
+    private userGroupRepository: Repository<UserGroup>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {}
+
+  private readonly USER_CACHE_KEY = 'user:';
+  private readonly USERS_CACHE_KEY = 'users';
+  private readonly GROUP_INFO_CACHE_KEY = 'group-info:';
+  private readonly CACHE_TTL = 3600;
 
   async createUser(userData: Partial<User>): Promise<User> {
     const user = this.userRepository.create(userData);
-    return await this.userRepository.save(user);
+    const savedUser = await this.userRepository.save(user);
+
+    await this.cacheManager.del(this.USERS_CACHE_KEY);
+    return savedUser;
   }
   async findOneByUsername(username: string): Promise<User> {
-    return await this.userRepository.findOne({ where: { username } });
+    const cacheKey = this.USER_CACHE_KEY + username;
+    const cachedUser = await this.cacheManager.get<User>(cacheKey);
+
+    if (cachedUser) {
+      return cachedUser;
+    }
+    const user = await this.userRepository.findOne({ where: { username } });
+    if (user) {
+      await this.cacheManager.set(cacheKey, user, this.CACHE_TTL);
+    }
+    return user;
+  }  
+
+  // Get a list of groups that a user belongs to
+  async findGroupsByUserId(userId: number): Promise<number[]> {
+    const userGroups = await this.userGroupRepository.find({
+      where: { user: {id: userId} }, 
+      relations: ['groups'] 
+    });
+    if (!userGroups || userGroups.length === 0) {
+      throw new NotFoundException('No groups found for this user');
+    }
+
+    return userGroups.map((userGroup) => userGroup.group.id);
   }
 
   async updateProfileImage(userId: number, uploadImageDto: UploadImageDto, file: Express.Multer.File): Promise<User> {
@@ -62,12 +98,23 @@ export class UserService {
     user.profileImage = fileName; 
     await this.userRepository.save(user);
 
-    // console.log('user: ', user);
+    // Invalidate caches
+    await this.cacheManager.del(`${this.USER_CACHE_KEY}${userId}`);
+    await this.cacheManager.del(this.USERS_CACHE_KEY);
+    
+    for(const groupId of await this.findGroupsByUserId(userId)) {
+      await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${groupId}`);
+    }
 
     return await this.findOne(userId); 
   }
 
   async findAll(): Promise<User[]> {
+    const cachedUsers = await this.cacheManager.get<User[]>(this.USERS_CACHE_KEY);
+    if (cachedUsers) {
+      return cachedUsers;
+    }
+
     const users = await this.userRepository.find();
 
     for (const user of users) {
@@ -76,14 +123,24 @@ export class UserService {
       }
     }
 
+    await this.cacheManager.set(this.USERS_CACHE_KEY, users, this.CACHE_TTL);
     return users;
   }
 
   async findOne(id: number): Promise<User> {
+    const cacheKey = this.USER_CACHE_KEY + id;
+    const cachedUser = await this.cacheManager.get<User>(cacheKey);
+    if(cachedUser) {
+      return cachedUser;
+    }
     const user = await this.userRepository.findOne({ where: { id } });
 
     if (user && user.profileImage) {
       user.profileImage = `http://localhost:${process.env.PORT}/uploads/${user.profileImage}`;
+    }
+
+    if (user) {
+      await this.cacheManager.set(cacheKey, user, this.CACHE_TTL);
     }
 
     return user;
@@ -91,6 +148,12 @@ export class UserService {
 
   async updateUser(id: number, username: string): Promise<User> {
     await this.userRepository.update(id, { username});
+    // Invalidate caches
+    await this.cacheManager.del(`${this.USER_CACHE_KEY}${id}`);
+    await this.cacheManager.del(this.USERS_CACHE_KEY);
+    for(const groupId of await this.findGroupsByUserId(id)) {
+      await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${groupId}`);
+    }
     return await this.findOne(id);
   }
   async updatePassword(id: number, oldpassword: string, newpassword: string): Promise<User> {
@@ -105,6 +168,10 @@ export class UserService {
     }
     const encodednewpassword = await bcrypt.hash(newpassword, process.env.SALT_ROUNDS || 10);
     await this.userRepository.update(id, { password: encodednewpassword}); 
+    // Invalidate caches
+    await this.cacheManager.del(`${this.USER_CACHE_KEY}${id}`);
+    await this.cacheManager.del(this.USERS_CACHE_KEY);
+    
     return await this.findOne(id);
   }
 
@@ -113,7 +180,13 @@ export class UserService {
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    await this.userRepository.delete(id);
+    // Invalidate caches
+    await this.cacheManager.del(`${this.USER_CACHE_KEY}${id}`);
+    await this.cacheManager.del(this.USERS_CACHE_KEY);
+    for(const groupId of await this.findGroupsByUserId(id)) {
+      await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${groupId}`);
+    }
+    await this.userRepository.delete(id);    
   }
 
   async assignAdminRole(userId: number): Promise<User> {
@@ -125,6 +198,13 @@ export class UserService {
 
     user.role = UserRole.ADMIN;
     await this.userRepository.save(user);
+
+    // Invalidate caches
+    await this.cacheManager.del(`${this.USER_CACHE_KEY}${userId}`);
+    await this.cacheManager.del(this.USERS_CACHE_KEY);
+    for(const groupId of await this.findGroupsByUserId(userId)) {
+      await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${groupId}`);
+    }
     return await this.findOne(userId);
   }
   
@@ -137,6 +217,14 @@ export class UserService {
 
     user.role = UserRole.USER;
     this.userRepository.save(user);
+
+    // Invalidate caches
+    await this.cacheManager.del(`${this.USER_CACHE_KEY}${userId}`);
+    await this.cacheManager.del(this.USERS_CACHE_KEY);
+    for(const groupId of await this.findGroupsByUserId(userId)) {
+      await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${groupId}`);
+    }
+
     return await this.findOne(userId);
   }
 }

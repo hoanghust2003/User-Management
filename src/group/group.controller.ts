@@ -33,6 +33,14 @@ export class GroupController {
     return await this.groupService.createGroup(createGroupDto.name, createGroupDto.description);
   }
 
+  @Get('permissions')
+  @Permission(Permissions.VIEW_LIST_PERMISSIONS)
+  @ApiOperation({ summary: 'Get a list of all permissions ' })
+  @ApiResponse({ status: 200, description: 'Return all permisions' })
+  async getPermissions(): Promise<Permissions[]> {
+    return this.groupService.getPermissions();
+  }
+
   @Get(':id')
   @Permission(Permissions.VIEW_GROUP)
   @ApiOperation({ summary: 'Get a group by ID' })

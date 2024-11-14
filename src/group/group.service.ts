@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, In, Repository } from 'typeorm';
 import { Group } from '../entities/group.entity';
@@ -6,7 +6,8 @@ import { User } from '../entities/user.entity';
 import { GroupPermission } from 'src/entities/group-permission.entity';
 import { UserGroup } from 'src/entities/user-group.entity';
 import { Permissions } from 'src/common/enums/permissions.enum';
-
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 @Injectable()
 export class GroupService {
   constructor(
@@ -18,16 +19,37 @@ export class GroupService {
     private groupPermissionRepository: Repository<GroupPermission>,
     @InjectRepository(UserGroup)
     private userGroupRepository: Repository<UserGroup>,
-  
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
+
+  private readonly GROUPS_CACHE_KEY = 'groups';
+  private readonly GROUP_INFO_CACHE_KEY = 'group-info:';
+  private readonly HAS_PERMISSION_CACHE_KEY = ':has-permission:';
+  private readonly CACHE_TTL = 3600;
 
   // Get a list of all groups
   async findAll(): Promise<Group[]> {
-    return await this.groupRepository.find();
+    // Try to get from cache first
+    const cachedGroups = await this.cacheManager.get<Group[]>(this.GROUPS_CACHE_KEY);
+    if (cachedGroups) {
+      return cachedGroups;
+    }
+
+    const groups = await this.groupRepository.find();
+    // Cache the result
+    await this.cacheManager.set(this.GROUPS_CACHE_KEY, groups, this.CACHE_TTL);
+    return groups;
   }
 
   // Get information about a specific group
   async findGroupById(id: number): Promise<object> {
+    // Try to get from cache first
+    const cacheKey = this.GROUP_INFO_CACHE_KEY + id;
+    const cachedGroupInfo = await this.cacheManager.get<object>(cacheKey);
+    if (cachedGroupInfo) {
+      return cachedGroupInfo;
+    }
+
     const group = await this.groupRepository.findOne({ where: { id }});
     if (!group) {
       throw new Error('Group not found');
@@ -53,6 +75,9 @@ export class GroupService {
         members,
         permissions,
     };
+    // Save to cache
+    await this.cacheManager.set(cacheKey, groupInfo, this.CACHE_TTL);
+
     return groupInfo;
   }
 
@@ -60,18 +85,60 @@ export class GroupService {
   async createGroup(name: string, description: string): Promise<object> {
     const group = await this.groupRepository.create({ name , description});
     await this.groupRepository.save(group);
+    // Invalidate groups cache
+    await this.cacheManager.del(this.GROUPS_CACHE_KEY);
     return await this.findGroupById(group.id);
   }
 
   // Update a group
   async updateGroup(id: number, name: string, description: string): Promise<object> {
     await this.groupRepository.update(id, { name, description });
+
+    // Invalidate caches
+    await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${id}`);
+    await this.cacheManager.del(this.GROUPS_CACHE_KEY);
+
     return await this.findGroupById(id);
+  }
+
+  //find members of a group
+  async findMembersByGroupId(id: number): Promise<number[]> {
+    const userGroups = await this.userGroupRepository.find({ where: { group: { id } }, relations: ['user'] });
+    const members = userGroups.map(userGroup => {
+      const user = userGroup.user;
+      // Return only necessary user information
+      return user.id;
+    });
+    return members;
+  }
+
+  //find permissions of a group
+  async findPermissionsByGroupId(id: number): Promise<Permissions[]> {
+    const groupPermissions = await this.groupPermissionRepository.find({ where: { group: { id } } });
+    const permissions = groupPermissions.map(permission => permission.permission);
+    return permissions;
   }
 
   // Delete a group
   async removeGroup(id: number): Promise<void> {
+    //Invalidate userPermission cache
+    for (const idmember of await this.findMembersByGroupId(id)) {
+      for (const permission of await this.findPermissionsByGroupId(id)) {
+        await this.cacheManager.del(`${idmember}${this.HAS_PERMISSION_CACHE_KEY}${permission}`);
+      }
+    }
+    // Remove group
     await this.groupRepository.delete(id);
+
+    // Invalidate group and list group caches
+    await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${id}`);
+    await this.cacheManager.del(this.GROUPS_CACHE_KEY);
+  }
+
+  // Get a list of all permissions
+  async getPermissions(): Promise<Permissions[]> {
+    const permissions = Object.values(Permissions) as Permissions[];
+    return permissions;
   }
 
   // Add a member to a group
@@ -95,6 +162,15 @@ export class GroupService {
     // If the user is not a member of the group, create a new UserGroup record
     const userGroup = await this.userGroupRepository.create({ user, group });
     await this.userGroupRepository.save(userGroup);
+
+    // Invalidate group info cache
+    await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${groupId}`);
+
+    // Invalidate userPermission cache   
+    for (const permission of await this.findPermissionsByGroupId(groupId)) {
+      await this.cacheManager.del(`${userId}${this.HAS_PERMISSION_CACHE_KEY}${permission}`);
+    }
+
     return await this.findGroupById(groupId);
   }
 
@@ -109,6 +185,15 @@ export class GroupService {
     }
 
     await this.userGroupRepository.delete(userGroup.id);
+
+    // Invalidate group info cache
+    await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${groupId}`);
+
+    // Invalidate userPermission cache   
+    for (const permission of await this.findPermissionsByGroupId(groupId)) {
+      await this.cacheManager.del(`${userId}${this.HAS_PERMISSION_CACHE_KEY}${permission}`);
+    }
+
     return await this.findGroupById(groupId);
   }
 
@@ -132,6 +217,16 @@ export class GroupService {
         await this.groupPermissionRepository.save(newPermission);
       }
     }
+
+    // Invalidate group info cache
+    await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${groupId}`);
+    // Invalidate userPermission cache
+    for (const idmember of await this.findMembersByGroupId(groupId)) {
+      for (const permission of permissions) {
+        await this.cacheManager.del(`${idmember}${this.HAS_PERMISSION_CACHE_KEY}${permission}`);
+      }
+    }
+
     return await this.findGroupById(groupId);
   }
 
@@ -157,6 +252,16 @@ export class GroupService {
     // Remove the permission from the group
     await this.groupPermissionRepository.delete(permissionToRemove.id);
     }
+
+    // Invalidate group info cache
+    await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${groupId}`);
+    // Invalidate userPermission cache
+    for (const idmember of await this.findMembersByGroupId(groupId)) {
+      for (const permission of permissions) {
+        await this.cacheManager.del(`${idmember}${this.HAS_PERMISSION_CACHE_KEY}${permission}`);
+      }
+    }
+
     return await this.findGroupById(groupId);
   }
 
