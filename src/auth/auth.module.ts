@@ -10,9 +10,12 @@ import { User } from 'src/entities/user.entity';
 @Module({
   imports: [
     forwardRef(() => UsersModule),
-    JwtModule.register({
+    JwtModule.registerAsync({
       global: true,
-      signOptions: { expiresIn: '60m' },
+      useFactory: async () => ({
+        secret: process.env.JWT_SECRET,
+        signOptions: { expiresIn: process.env.JWT_EXPIRES_TIME },
+      }),
     }),
     TypeOrmModule.forFeature([GroupPermission, User]),
   ],

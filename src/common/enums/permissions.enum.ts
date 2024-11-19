@@ -7,6 +7,7 @@ export enum Permissions {
   UPDATE_OTHER_USER = 'update_other_user', 
   DELETE_OTHER_USER = 'delete_other_user', 
   CHANGE_OTHER_USER_PASSWORD = 'change_other_user_password',
+  EXPORT_USERS = 'export_users',
 
   // Permissions to manage groups
   VIEW_LIST_GROUPS = 'view_list_groups', 
