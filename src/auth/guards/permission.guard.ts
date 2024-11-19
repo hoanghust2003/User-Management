@@ -22,12 +22,13 @@ export class PermissionGuard implements CanActivate {
     if (!user) {
       throw new UnauthorizedException('You must be logged in to access this resource');
     }
-    const user_object = await this.userService.findOne(user.sub);
-    
+
     // If no permission is required, allow access
     if (!requiredPermission) {
       return true; 
     }
+
+    const user_object = await this.userService.findOne(user.sub);
 
     // If the user is an admin or super admin, allow access  
     if (user_object.role === UserRole.ADMIN || user_object.role === UserRole.SUPER_ADMIN) {

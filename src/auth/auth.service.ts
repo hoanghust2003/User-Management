@@ -23,7 +23,8 @@ export class AuthService {
   ) {}
 
   private readonly HAS_PERMISSION_CACHE_KEY = ':has-permission:';
-  private readonly CACHE_TTL = 30;
+  private readonly USERS_CACHE_KEY = 'users';
+  private readonly CACHE_TTL = 30000;
 
   async signIn(
     username: string, 
@@ -46,17 +47,17 @@ export class AuthService {
     }
 
     const payload = { username: user.username, sub: user.id };
-    // console.log(process.env.JWT_SECRET);
+    console.log(process.env.JWT_SECRET);
     return {
       access_token: await this.jwtService.signAsync(payload, { secret: process.env.JWT_SECRET }),
     };
   }
 
-  async signUp(authDto: AuthDto): Promise<void> {
+  async signUp(authDto: AuthDto): Promise<User> {
     const { username, password } = authDto;
 
     // Check if the username already exists
-    const existingUser = await this.userService.findOneByUsername(username);
+    const existingUser = await this.userRepository.findOne({ where: { username } });
     if (existingUser) {
       throw new ConflictException('Username already exists');
     }
@@ -65,10 +66,16 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(password, process.env.SALT_ROUNDS || 10);
 
     // Save the user to the database
-    await this.userService.createUser({
+    const userData: Partial<User> = {
       username,
       password: hashedPassword,
-    });
+    };
+
+    const user = this.userRepository.create(userData);
+    const savedUser = await this.userRepository.save(user);
+
+    await this.cacheManager.del(this.USERS_CACHE_KEY);
+    return savedUser;
   }
 
   // Check if a user has a specific permission

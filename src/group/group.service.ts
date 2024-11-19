@@ -25,7 +25,7 @@ export class GroupService {
   private readonly GROUPS_CACHE_KEY = 'groups';
   private readonly GROUP_INFO_CACHE_KEY = 'group-info:';
   private readonly HAS_PERMISSION_CACHE_KEY = ':has-permission:';
-  private readonly GROUP_CACHE_TTL = 120;
+  private readonly GROUP_CACHE_TTL = 120000;
 
   // Get a list of all groups
   async findAll(): Promise<Group[]> {

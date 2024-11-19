@@ -24,31 +24,72 @@ export class UserService {
   private readonly USER_CACHE_KEY = 'user:';
   private readonly USERS_CACHE_KEY = 'users';
   private readonly GROUP_INFO_CACHE_KEY = 'group-info:';
-  private readonly USER_CACHE_TTL = 60;
-  private readonly USERS_CACHE_TTL = 120;
+  private readonly USER_CACHE_TTL = 60000;
+  private readonly USERS_CACHE_TTL = 120000;
+  
+  async findAll(): Promise<User[]> {
+    const cachedUsers = await this.cacheManager.get<User[]>(this.USERS_CACHE_KEY);
+    if (cachedUsers) {
+      return cachedUsers;
+    }
 
+    const users = await this.userRepository.find();
 
-  async createUser(userData: Partial<User>): Promise<User> {
-    const user = this.userRepository.create(userData);
-    const savedUser = await this.userRepository.save(user);
-
-    await this.cacheManager.del(this.USERS_CACHE_KEY);
-    return savedUser;
+    for (const user of users) {
+      if (user.profileImage) {
+        user.profileImage = `http://localhost:${process.env.PORT}/uploads/${user.profileImage}`;
+      }
+    }
+    
+    await this.cacheManager.set(this.USERS_CACHE_KEY, users, this.USERS_CACHE_TTL);
+    return users;
   }
-  async findOneByUsername(username: string): Promise<User> {
-    const cacheKey = this.USER_CACHE_KEY + username;
-    const cachedUser = await this.cacheManager.get<User>(cacheKey);
 
-    if (cachedUser) {
+  async findOne(id: number): Promise<User> {
+    const cacheKey = this.USER_CACHE_KEY + id;
+    const cachedUser = await this.cacheManager.get(cacheKey);
+
+
+    if(cachedUser) {
       return cachedUser;
     }
-    const user = await this.userRepository.findOne({ where: { username } });
+    const user = await this.userRepository.findOne({ where: { id } });
+
+    if (user && user.profileImage) {
+      user.profileImage = `http://localhost:${process.env.PORT}/uploads/${user.profileImage}`;
+    }
+
     if (user) {
       await this.cacheManager.set(cacheKey, user, this.USER_CACHE_TTL);
-    }
+    } 
+    // await this.cacheManager.reset();
     return user;
-  }  
+  }
 
+  async updateUser(id: number, username: string): Promise<User> {
+    await this.userRepository.update(id, { username});
+    // Invalidate caches
+    await this.cacheManager.del(`${this.USER_CACHE_KEY}${id}`);
+    await this.cacheManager.del(this.USERS_CACHE_KEY);
+    for(const groupId of await this.findGroupsByUserId(id)) {
+      await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${groupId}`);
+    }
+    return await this.findOne(id);
+  }
+  async updatePassword(id: number, oldpassword: string, newpassword: string): Promise<User> {
+    const user = await this.userRepository
+    .createQueryBuilder('user')
+    .addSelect('user.password') // Lấy thêm cột password
+    .where('user.id = :id', { id : id })
+    .getOne();
+    const isMatch = await bcrypt.compare(oldpassword, user.password);
+    if (!isMatch) {
+      throw new NotFoundException('Old password is not correct');
+    }
+    const encodednewpassword = await bcrypt.hash(newpassword, process.env.SALT_ROUNDS || 10);
+    await this.userRepository.update(id, { password: encodednewpassword});     
+    return await this.findOne(id);
+  }
   // Get a list of groups that a user belongs to
   async findGroupsByUserId(userId: number): Promise<number[]> {
     const userGroups = await this.userGroupRepository.find({
@@ -109,72 +150,6 @@ export class UserService {
     }
 
     return await this.findOne(userId); 
-  }
-
-  async findAll(): Promise<User[]> {
-    const cachedUsers = await this.cacheManager.get<User[]>(this.USERS_CACHE_KEY);
-    if (cachedUsers) {
-      return cachedUsers;
-    }
-
-    const users = await this.userRepository.find();
-
-    for (const user of users) {
-      if (user.profileImage) {
-        user.profileImage = `http://localhost:${process.env.PORT}/uploads/${user.profileImage}`;
-      }
-    }
-
-    await this.cacheManager.set(this.USERS_CACHE_KEY, users, this.USERS_CACHE_TTL);
-    return users;
-  }
-
-  async findOne(id: number): Promise<User> {
-    const cacheKey = this.USER_CACHE_KEY + id;
-    const cachedUser = await this.cacheManager.get<User>(cacheKey);
-    if(cachedUser) {
-      return cachedUser;
-    }
-    const user = await this.userRepository.findOne({ where: { id } });
-
-    if (user && user.profileImage) {
-      user.profileImage = `http://localhost:${process.env.PORT}/uploads/${user.profileImage}`;
-    }
-
-    if (user) {
-      await this.cacheManager.set(cacheKey, user, this.USER_CACHE_TTL);
-    }
-
-    return user;
-  }
-
-  async updateUser(id: number, username: string): Promise<User> {
-    await this.userRepository.update(id, { username});
-    // Invalidate caches
-    await this.cacheManager.del(`${this.USER_CACHE_KEY}${id}`);
-    await this.cacheManager.del(this.USERS_CACHE_KEY);
-    for(const groupId of await this.findGroupsByUserId(id)) {
-      await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${groupId}`);
-    }
-    return await this.findOne(id);
-  }
-  async updatePassword(id: number, oldpassword: string, newpassword: string): Promise<User> {
-    const user = await this.userRepository
-    .createQueryBuilder('user')
-    .addSelect('user.password') // Lấy thêm cột password
-    .where('user.id = :id', { id : id })
-    .getOne();
-    const isMatch = await bcrypt.compare(oldpassword, user.password);
-    if (!isMatch) {
-      throw new NotFoundException('Old password is not correct');
-    }
-    const encodednewpassword = await bcrypt.hash(newpassword, process.env.SALT_ROUNDS || 10);
-    await this.userRepository.update(id, { password: encodednewpassword}); 
-    // Invalidate caches
-    await this.cacheManager.del(`${this.USER_CACHE_KEY}${id}`);
-    await this.cacheManager.del(this.USERS_CACHE_KEY);
-    
-    return await this.findOne(id);
   }
 
   async removeUser(id: number): Promise<void> {
