@@ -142,7 +142,7 @@ export class UserController {
   @Get('exports/xls')
   @ApiOperation({ summary: 'Export users to Excel' })
   @ApiResponse({ status: 200, description: 'Users exported successfully.' })
-  // @Permission(Permissions.EXPORT_USERS)
+  @Permission(Permissions.EXPORT_USERS)
   async exportXLS(@Res() res: Response) {
     const users = await this.userService.findAll();
     
