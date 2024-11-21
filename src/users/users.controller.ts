@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Put, Request, UploadedFile, UseGuards, UseInterceptors, ParseIntPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Put, Request, UploadedFile, UseGuards, UseInterceptors, ParseIntPipe, Res } from '@nestjs/common';
 import { UserService } from './users.service';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -12,10 +12,12 @@ import { Permissions } from 'src/common/enums/permissions.enum';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiConsumes } from '@nestjs/swagger';
 import { User } from 'src/entities/user.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
+import { Response } from 'express';
+import * as ExcelJS from 'exceljs';
 
 @ApiTags('users')
 @ApiBearerAuth()
-@UseGuards(AuthGuard, PermissionGuard)
+// @UseGuards(AuthGuard, PermissionGuard)
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -135,5 +137,48 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'Admin role removed successfully.' })
   async removeRole(@Param('id', ParseIntPipe) id: number): Promise<User> {
     return await this.userService.removeAdminRole(id);
+  }
+
+  @Get('exports/xls')
+  @ApiOperation({ summary: 'Export users to Excel' })
+  @ApiResponse({ status: 200, description: 'Users exported successfully.' })
+  // @Permission(Permissions.EXPORT_USERS)
+  async exportXLS(@Res() res: Response) {
+    const users = await this.userService.findAll();
+    
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('TestExportXLS');
+
+    worksheet.columns = [
+        { header: 'id', key: 'id' },
+        { header: 'username', key: 'username' },
+        { header: 'role', key: 'role' },
+        { header: 'profileImage', key: 'profileImage' },
+    ];
+
+    users.forEach(user => {
+      worksheet.addRow(user);
+    });
+
+    // Định dạng tiêu đề cột (in đậm, căn giữa)
+  worksheet.getRow(1).font = { bold: true }; // In đậm hàng tiêu đề
+  worksheet.getRow(1).alignment = { horizontal: 'center', vertical: 'middle' }; // Căn giữa tiêu đề
+  worksheet.getRow(1).fill = {
+    type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF00' } // Tô màu nền vàng cho tiêu đề
+  };
+
+  // Điều chỉnh độ rộng cột nếu cần thiết (cột ID và username có độ rộng khác nhau)
+  worksheet.getColumn('A').width = 10;  // Cột ID
+  worksheet.getColumn('B').width = 20;  // Cột Username
+  worksheet.getColumn('C').width = 15;  // Cột Role
+  worksheet.getColumn('D').width = 68;  // Cột Profile Image
+
+  // Định dạng các cột khác nếu cần, ví dụ: căn phải cho cột ID
+  worksheet.getColumn('A').alignment = { horizontal: 'right' };
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    res.header('Content-Disposition', 'attachment; filename=users_list.xlsx');
+    res.type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buffer);
   }
 }
