@@ -74,6 +74,7 @@ export class AuthService {
     const savedUser = await this.userRepository.save(user);
 
     await this.cacheManager.del(this.USERS_CACHE_KEY);
+    await this.cacheManager.del(`/api/users`);
     return savedUser;
   }
 

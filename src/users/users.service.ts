@@ -70,9 +70,12 @@ export class UserService {
     await this.userRepository.update(id, { username});
     // Invalidate caches
     await this.cacheManager.del(`${this.USER_CACHE_KEY}${id}`);
+    await this.cacheManager.del(`/api/users/${id}`);
     await this.cacheManager.del(this.USERS_CACHE_KEY);
+    await this.cacheManager.del(`/api/users`);
     for(const groupId of await this.findGroupsByUserId(id)) {
       await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${groupId}`);
+      await this.cacheManager.del(`/api/groups/${groupId}`);
     }
     return await this.findOne(id);
   }
@@ -143,10 +146,13 @@ export class UserService {
 
     // Invalidate caches
     await this.cacheManager.del(`${this.USER_CACHE_KEY}${userId}`);
+    await this.cacheManager.del(`/api/users/${userId}`);
     await this.cacheManager.del(this.USERS_CACHE_KEY);
+    await this.cacheManager.del(`/api/users`);
     
     for(const groupId of await this.findGroupsByUserId(userId)) {
       await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${groupId}`);
+      await this.cacheManager.del(`/api/groups/${groupId}`);
     }
 
     return await this.findOne(userId); 
@@ -159,9 +165,12 @@ export class UserService {
     }
     // Invalidate caches
     await this.cacheManager.del(`${this.USER_CACHE_KEY}${id}`);
+    await this.cacheManager.del(`/api/users/${id}`);
     await this.cacheManager.del(this.USERS_CACHE_KEY);
+    await this.cacheManager.del(`/api/users`);
     for(const groupId of await this.findGroupsByUserId(id)) {
       await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${groupId}`);
+      await this.cacheManager.del(`/api/groups/${groupId}`);
     }
     await this.userRepository.delete(id);    
   }
@@ -178,9 +187,12 @@ export class UserService {
 
     // Invalidate caches
     await this.cacheManager.del(`${this.USER_CACHE_KEY}${userId}`);
+    await this.cacheManager.del(`/api/users/${userId}`);
     await this.cacheManager.del(this.USERS_CACHE_KEY);
+    await this.cacheManager.del(`/api/users`);
     for(const groupId of await this.findGroupsByUserId(userId)) {
       await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${groupId}`);
+      await this.cacheManager.del(`/api/groups/${groupId}`);
     }
     return await this.findOne(userId);
   }
@@ -197,9 +209,12 @@ export class UserService {
 
     // Invalidate caches
     await this.cacheManager.del(`${this.USER_CACHE_KEY}${userId}`);
+    await this.cacheManager.del(`/api/users/${userId}`);
     await this.cacheManager.del(this.USERS_CACHE_KEY);
+    await this.cacheManager.del(`/api/users`);
     for(const groupId of await this.findGroupsByUserId(userId)) {
       await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${groupId}`);
+      await this.cacheManager.del(`/api/groups/${groupId}`);
     }
 
     return await this.findOne(userId);

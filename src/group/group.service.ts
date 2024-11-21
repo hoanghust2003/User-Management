@@ -87,6 +87,7 @@ export class GroupService {
     await this.groupRepository.save(group);
     // Invalidate groups cache
     await this.cacheManager.del(this.GROUPS_CACHE_KEY);
+    await this.cacheManager.del(`/api/groups`);
     return await this.findGroupById(group.id);
   }
 
@@ -96,7 +97,9 @@ export class GroupService {
 
     // Invalidate caches
     await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${id}`);
+    await this.cacheManager.del(`/api/groups/${id}`);
     await this.cacheManager.del(this.GROUPS_CACHE_KEY);
+    await this.cacheManager.del(`/api/groups`);
 
     return await this.findGroupById(id);
   }
@@ -132,7 +135,9 @@ export class GroupService {
 
     // Invalidate group and list group caches
     await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${id}`);
+    await this.cacheManager.del(`/api/groups/${id}`);
     await this.cacheManager.del(this.GROUPS_CACHE_KEY);
+    await this.cacheManager.del(`/api/groups`);
   }
 
   // Get a list of all permissions
@@ -165,6 +170,8 @@ export class GroupService {
 
     // Invalidate group info cache
     await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${groupId}`);
+    await this.cacheManager.del(`/api/groups/${groupId}`);
+
 
     // Invalidate userPermission cache   
     for (const permission of await this.findPermissionsByGroupId(groupId)) {
@@ -188,6 +195,7 @@ export class GroupService {
 
     // Invalidate group info cache
     await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${groupId}`);
+    await this.cacheManager.del(`/api/groups/${groupId}`);
 
     // Invalidate userPermission cache   
     for (const permission of await this.findPermissionsByGroupId(groupId)) {
@@ -220,6 +228,7 @@ export class GroupService {
 
     // Invalidate group info cache
     await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${groupId}`);
+    await this.cacheManager.del(`/api/groups/${groupId}`);
     // Invalidate userPermission cache
     for (const idmember of await this.findMembersByGroupId(groupId)) {
       for (const permission of permissions) {
@@ -255,6 +264,7 @@ export class GroupService {
 
     // Invalidate group info cache
     await this.cacheManager.del(`${this.GROUP_INFO_CACHE_KEY}${groupId}`);
+    await this.cacheManager.del(`/api/groups/${groupId}`);
     // Invalidate userPermission cache
     for (const idmember of await this.findMembersByGroupId(groupId)) {
       for (const permission of permissions) {
