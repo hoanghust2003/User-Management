@@ -17,7 +17,7 @@ import * as ExcelJS from 'exceljs';
 
 @ApiTags('users')
 @ApiBearerAuth()
-// @UseGuards(AuthGuard, PermissionGuard)
+@UseGuards(AuthGuard, PermissionGuard)
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
