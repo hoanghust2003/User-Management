@@ -25,6 +25,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
       isGlobal: true,
       useFactory: async () => {
         const store = await redisStore({
+          ttl: 2*60000, // 2 minutes (milliseconds)
           socket: {
             host: 'localhost',
             port: 6379,
@@ -33,7 +34,6 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 
         return {
           store: store as unknown as CacheStore,
-          ttl: 3 * 60000, // 3 minutes (milliseconds)
         };
       },
     }),

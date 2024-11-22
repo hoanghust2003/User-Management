@@ -56,16 +56,7 @@ export class GroupService {
     }
     // Get a list of members in the group
     const userGroups = await this.userGroupRepository.find({ where: { group: { id } }, relations: ['user'] });
-    const members = userGroups.map(userGroup => {
-      const user = userGroup.user;
-      // Return only necessary user information
-      return {
-        id: user.id,
-        username: user.username,
-        role: user.role,
-        ImagePath: `http://localhost:${process.env.PORT}/uploads/${user.profileImage}`, // Trả về đường dẫn ảnh
-      };
-    });
+    const members = userGroups.map(userGroup => userGroup.user);
     // Find all permissions of the group
     const groupPermissions = await this.groupPermissionRepository.find({ where: { group: { id } } });
     const permissions = groupPermissions.map(permission => permission.permission);
@@ -148,7 +139,7 @@ export class GroupService {
 
   // Add a member to a group
   async addMemberToGroup(groupId: number, userId: number): Promise<object> {
-    // Kiểm tra xem nhóm và người dùng có tồn tại không
+    // Check if the group and user exist
     const group = await this.groupRepository.findOne({ where: { id: groupId } });
     const user = await this.userRepository.findOne({ where: { id: userId } });
   

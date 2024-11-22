@@ -160,21 +160,21 @@ export class UserController {
       worksheet.addRow(user);
     });
 
-    // Định dạng tiêu đề cột (in đậm, căn giữa)
-  worksheet.getRow(1).font = { bold: true }; // In đậm hàng tiêu đề
-  worksheet.getRow(1).alignment = { horizontal: 'center', vertical: 'middle' }; // Căn giữa tiêu đề
+    // Format header
+  worksheet.getRow(1).font = { bold: true };
+  worksheet.getRow(1).alignment = { horizontal: 'center', vertical: 'middle' }; 
   worksheet.getRow(1).fill = {
-    type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF00' } // Tô màu nền vàng cho tiêu đề
+    type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF00' } 
   };
 
-  // Điều chỉnh độ rộng cột nếu cần thiết (cột ID và username có độ rộng khác nhau)
-  worksheet.getColumn('A').width = 10;  // Cột ID
-  worksheet.getColumn('B').width = 20;  // Cột Username
-  worksheet.getColumn('C').width = 15;  // Cột Role
-  worksheet.getColumn('D').width = 68;  // Cột Profile Image
+  // Format data
+  worksheet.getColumn('A').width = 10;  
+  worksheet.getColumn('B').width = 20;  
+  worksheet.getColumn('C').width = 15;  
+  worksheet.getColumn('D').width = 68;  
 
-  // Định dạng các cột khác nếu cần, ví dụ: căn phải cho cột ID
-  worksheet.getColumn('A').alignment = { horizontal: 'right' };
+  // align center ID
+  worksheet.getColumn('A').alignment = { horizontal: 'center' };
 
     const buffer = await workbook.xlsx.writeBuffer();
     res.header('Content-Disposition', 'attachment; filename=users_list.xlsx');

@@ -34,18 +34,13 @@ export class UserService {
     }
 
     const users = await this.userRepository.find();
-
-    for (const user of users) {
-      if (user.profileImage) {
-        user.profileImage = `http://localhost:${process.env.PORT}/uploads/${user.profileImage}`;
-      }
-    }
     
     await this.cacheManager.set(this.USERS_CACHE_KEY, users, this.USERS_CACHE_TTL);
     return users;
   }
 
   async findOne(id: number): Promise<User> {
+    // await this.cacheManager.reset();
     const cacheKey = this.USER_CACHE_KEY + id;
     const cachedUser = await this.cacheManager.get(cacheKey);
 
@@ -53,16 +48,13 @@ export class UserService {
     if(cachedUser) {
       return cachedUser;
     }
+    
     const user = await this.userRepository.findOne({ where: { id } });
-
-    if (user && user.profileImage) {
-      user.profileImage = `http://localhost:${process.env.PORT}/uploads/${user.profileImage}`;
-    }
 
     if (user) {
       await this.cacheManager.set(cacheKey, user, this.USER_CACHE_TTL);
     } 
-    // await this.cacheManager.reset();
+
     return user;
   }
 
